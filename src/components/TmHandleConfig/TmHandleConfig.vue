@@ -1,5 +1,5 @@
 <template>
-    <el-dialog :model-value="visibleDialog" title="配置番茄钟" width="60%" :before-close="handleClose" @open="openPreHandle">
+    <el-dialog :model-value="visibleDialog" destroy-on-close  title="配置番茄钟" width="60%"  :before-close="handleClose" @open="openPreHandle">
         <el-form :rules="rules" :model="configForm.from" :inline="true" label-width="120px" ref="ruleFormRef"
             class="demo-form-inline">
             <el-form-item label="番茄时间" prop="tomatoTimeSize">
@@ -73,7 +73,7 @@ const handleClose = (done:Function) => {
 };
 
 watchEffect(()=>{
-    configForm.from = {...props.configData}    
+    configForm.from = {...props.configData}     
 })
 
 // 表单验证

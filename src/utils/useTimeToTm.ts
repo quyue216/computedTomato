@@ -1,10 +1,6 @@
 import dayjs from "dayjs";
 import type { TomatoConfig, TimeIntervalObject } from "@/global/global";
 
-/* 
-  内部并没有使用任何Vue3的响应式API,
-  hooks会重新执行嘛，如果状态发生变化，整个函数
-*/
 export default function useTimeTm(configData: TomatoConfig,
   timesInfo: [Date, Date]) {
 
@@ -57,7 +53,6 @@ export default function useTimeTm(configData: TomatoConfig,
 
     // 计算时间段
     let startTimeObj = dayjs(timestamp); //开始时间对象
-    // console.log(startTimeObj);
 
     let startMinute = startTimeObj.minute();
 
@@ -122,7 +117,7 @@ export default function useTimeTm(configData: TomatoConfig,
     });
 
     isWork = !isWork;
-
+    // 更新状态信息
     runtimeVars = {
       tmCount,
       restCount,

@@ -34,9 +34,9 @@ const info = reactive<{
   timeInfo: [],
   onlyShowTm: false,
 });
-
+// 设置时间戳
 const startUnix = ref(dayjs().valueOf());
-
+// 保存生成的时间数据对象
 const saveSegments = ref<Array<TimeIntervalObject>>([]);
 
 selectInitTime();
@@ -50,9 +50,9 @@ const updateConfigData = (config:TomatoConfig)=>{
 const updateTimeInfo = (times:[Date,Date])=>{
   info.timeInfo = times 
 }
-// 有缓存读取缓存数据，无缓存生成最近两小时时间
+// 1.有缓存读取缓存数据，无缓存生成最近两小时时间
 function selectInitTime() {
-
+  // 没有缓存自动生成时间区间 
   if (!store.get(CONFIG_OBJECT_CACHE)) {
     info.timeInfo = initTimeInfo() as [Date,Date]
   } else {
@@ -69,7 +69,6 @@ function selectInitTime() {
       info.timeInfo = timeInfo;
 
       info.configData = configData   
-          
     }
   }
 }
@@ -91,7 +90,7 @@ watch(
     immediate: true,
   }
 );
-
+// 表示当前系统的高亮
 onMounted(() => {
   setInterval(() => {
     startUnix.value = dayjs().valueOf();
@@ -131,7 +130,6 @@ const saveNewSegments = computed(() => {
           <el-tab-pane>
             <!-- 自定义导航 -->
             <template #label> 时间段划分 </template>
-
             <TmDataToTable :segments="saveNewSegments" />
           </el-tab-pane>
           <el-tab-pane label="番茄统计信息">
