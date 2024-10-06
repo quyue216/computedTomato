@@ -14,10 +14,7 @@ import {
 import TmHandleConfig from "../TmHandleConfig/TmHandleConfig.vue";
 import {
   ref,
-  defineExpose,
-  defineEmits,
   defineProps,
- 
 } from "vue";
 import store from "store";
 import dayjs from "dayjs";
@@ -55,9 +52,6 @@ const isClose = (state:TimeIntervalObject) => {
 
   let { timeInfo } = store.get("CONFIG_OBJECT_CACHE");
 
-  console.log(minuteDiff , MIN_MINUTE);
-  
-
   if (minuteDiff <= MIN_MINUTE) {
     //不合法,不去设置
     ElMessage({
@@ -68,7 +62,7 @@ const isClose = (state:TimeIntervalObject) => {
     
     timeInterVal.value = timeInfo
   }else{
-    props.updateTimeInfo(timeInterVal.value)
+    props.updateTimeInfo(timeInterVal.value);
   }
 };
 
@@ -80,7 +74,7 @@ const isClose = (state:TimeIntervalObject) => {
     return  pre
   },[])
 
-  await navigator.clipboard.writeText(`(${text.join(" - ")}) ${window.tomatoNum}tm`);
+  await navigator.clipboard.writeText(`(${text.join(" - ")}) ${window.tomatoNum}tm * ${window.timeInterval}minute`);
  }
 </script>
 <template>
@@ -108,7 +102,6 @@ const isClose = (state:TimeIntervalObject) => {
   </el-row>
   <!-- 分隔线组件 -->
   <el-divider />
-  
   <!-- 弹窗组件反正默认不显示为什么要放到Home中，他放在哪都没问题
        放在tmHeader中更利用交互
    -->

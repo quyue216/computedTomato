@@ -85,7 +85,6 @@
           data[1] += item.timeInterval;
         }
       });
-     
       return data;
     };
   // 获取总番茄数量，和总休息
@@ -99,7 +98,10 @@
         result.push(arr[1].count);
         result.push(arr[0].count);
       }
+      // 方便复制保存番茄信息
       window.tomatoNum = result[0];
+      console.log("arr",arr);
+      window.timeInterval = arr[0].timeIntervals
       return result;
     });
   

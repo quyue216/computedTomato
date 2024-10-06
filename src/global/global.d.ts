@@ -32,5 +32,4 @@ declare global {
       tomatoNum: number;
     }
   }
-  window.tomatoNum = 0;
 declare module "store"
