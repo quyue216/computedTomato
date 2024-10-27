@@ -112,7 +112,7 @@ const saveNewSegments = computed(() => {
 <template>
   <div class="common-layout">
     <el-container>
-      <el-header height="50px"> 吃好，喝好，玩好 </el-header>
+      <el-header height="50px"> 日拱一卒 </el-header>
       <el-main class="tm-main">
         <!-- 这里感觉冗余了 -->
         <el-row class="tm-header-bg">
