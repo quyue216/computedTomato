@@ -112,18 +112,19 @@ const saveNewSegments = computed(() => {
 <template>
   <div class="common-layout">
     <el-container>
-      <el-header height="50px"> 日拱一卒 </el-header>
+      <el-header height="50px"> have fun </el-header>
       <el-main class="tm-main">
         <!-- 这里感觉冗余了 -->
         <el-row class="tm-header-bg">
           <el-col>
             <!-- 头部组件 -->
-            <TmHeader
+           <tm-header 
              :time-info="info.timeInfo as [Date, Date]"
+             :segments="saveNewSegments"
              :update-time-info="updateTimeInfo"
              :config-data="info.configData"
              :update-config-data="updateConfigData"
-            />
+           ></tm-header>
           </el-col>
         </el-row>
         <el-tabs class="tm-main-head-bg">

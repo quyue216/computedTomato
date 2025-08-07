@@ -12,10 +12,7 @@ import {
   ElMessage,
 } from "element-plus";
 import TmHandleConfig from "../TmHandleConfig/TmHandleConfig.vue";
-import {
-  ref,
-  defineProps,
-} from "vue";
+import { ref, defineProps } from "vue";
 import store from "store";
 import dayjs from "dayjs";
 import type { TimeIntervalObject } from "tomato";
@@ -25,13 +22,13 @@ const dialogVisible = ref(false);
 const MIN_MINUTE = 30;
 
 const props = defineProps<{
-  timeInfo:[Date,Date],
-  updateTimeInfo:(times:[Date,Date])=> void 
+  timeInfo: [Date, Date];
+  updateTimeInfo: (times: [Date, Date]) => void;
+  segments: TimeIntervalObject[];
 }>();
 
-
 //! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
-const timeInterVal = ref<[Date,Date]>(props.timeInfo);
+const timeInterVal = ref<[Date, Date]>(props.timeInfo);
 
 // 关闭配置对话框
 //! watch始终无法执行，不清楚原因暂时
@@ -39,10 +36,10 @@ const timeInterVal = ref<[Date,Date]>(props.timeInfo);
   console.log("值显示了哈哈哈");
 }) */
 // 关闭对话框,
-const isClose = (state:TimeIntervalObject) => {
+const isClose = (state: TimeIntervalObject) => {
   if (state) return;
- 
-  if(!timeInterVal.value?.every((item)=>item)) return 
+
+  if (!timeInterVal.value?.every((item) => item)) return;
 
   let startTime = dayjs(timeInterVal.value[0]);
 
@@ -59,28 +56,62 @@ const isClose = (state:TimeIntervalObject) => {
       type: "warning",
       duration: 3000,
     });
-    
-    timeInterVal.value = timeInfo
-  }else{
+
+    timeInterVal.value = timeInfo;
+  } else {
     props.updateTimeInfo(timeInterVal.value);
   }
 };
 
+console.log(props.segments, "---------HHHHH");
+
 // 复制函数
- const copyTime = async ()=>{
+const copyTime = async () => {
+  let text = props.timeInfo.reduce((pre: string[], item: Date) => {
+    pre.push(dayjs(item).format("MM-DD HH:mm"));
+    return pre;
+  }, []);
 
-  let text = props.timeInfo.reduce((pre:string[],item:Date)=>{
-    pre.push( dayjs(item).format("MM-DD HH:mm"))
-    return  pre
-  },[])
+  const tmSegmentToStr: (data: Array<TimeIntervalObject>) => string = (
+    tmData
+  ) => {
+    const tempObj: {
+      [property: string]: number;
+    } = {}; //暂存时间信息
 
-  await navigator.clipboard.writeText(`(${text.join(" - ")}) ${window.tomatoNum}tm * ${window.timeInterval}minute`);
- }
- 
+    let tempArr: Array<{
+      timeStr: string;
+      tomatoCount: string;
+    }> = []; //暂存
+
+    const workTm = tmData.filter((item) => item.type);
+
+    workTm.forEach((item) => {
+      const curCount = tempObj[item.timeInterval] || 0;
+      tempObj[item.timeInterval] = curCount + 1;
+    })
+
+    Object.entries(tempObj).forEach((item) => {
+      const [key, value] = item; //key 时间间隔 value 次数
+
+      return tempArr.push({
+        timeStr: `${value}*tm${key}*m`,
+        tomatoCount: value+'',
+      });
+    })
+
+    return tempArr.sort((a,b)=>{
+      return Number(b.tomatoCount) - Number(a.tomatoCount);
+    }).map(item=>item.timeStr).join(" + ");
+  };
+
+  await navigator.clipboard.writeText(
+    `(${text.join(" - ")}) ${tmSegmentToStr(props.segments)}`
+  );
+};
 </script>
 <template>
   <el-row justify="space-between">
-
     <el-col :span="11" :xs="24">
       <el-time-picker
         is-range
@@ -90,15 +121,12 @@ const isClose = (state:TimeIntervalObject) => {
         v-model="timeInterVal"
         @visible-change="isClose"
       />
-      
     </el-col>
     <el-col :span="3" :offset="3" :xs="6">
-      <el-button @click="dialogVisible = true" type="info"
-        >设置</el-button
-      >
+      <el-button @click="dialogVisible = true" type="info">设置</el-button>
     </el-col>
-    <el-col :span="3"  :offset="1" :xs="6">
-      <el-button type="primary" @click="copyTime" >复制</el-button>
+    <el-col :span="3" :offset="1" :xs="6">
+      <el-button type="primary" @click="copyTime">复制</el-button>
     </el-col>
   </el-row>
   <!-- 分隔线组件 -->
@@ -113,8 +141,4 @@ const isClose = (state:TimeIntervalObject) => {
   ></tm-handle-config>
 </template>
 
-
-
-<style scoped>
-</style>
-
+<style scoped></style>

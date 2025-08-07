@@ -64,7 +64,7 @@
   过滤时间，总休息时间为0的问题
   */
   import { computed, defineProps } from "vue";
-  import { dayjs, ElEmpty } from "element-plus";
+  import { ElEmpty } from "element-plus";
   import type {TimeIntervalObject} from "tomato"
 //  基于运行时推断
     const props = withDefaults(defineProps<{
@@ -99,9 +99,9 @@
         result.push(arr[0].count);
       }
       // 方便复制保存番茄信息
-      window.tomatoNum = result[0];
+      // window.tomatoNum = result[0];
       console.log("arr",arr);
-      window.timeInterval = arr[0].timeInterval
+      // window.timeInterval = result[0].timeInterval
       return result;
     });
   
@@ -124,6 +124,7 @@
     const remainingTimeInfo = computed(() => {
 
       let index = props.segments.indexOf(curTomNum.value);
+
       
       const timeInfo = props.segments.slice(index + 1);
     
