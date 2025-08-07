@@ -40,7 +40,7 @@
   </template>
   
   <script setup lang="ts">
-  import type {TimeIntervalObject } from "@/global/global.d.ts";
+  import type {TimeIntervalObject } from "tomato";
 
   import { ElTable, ElTableColumn} from "element-plus";
   

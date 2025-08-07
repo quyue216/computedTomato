@@ -18,7 +18,7 @@ import {
 } from "vue";
 import store from "store";
 import dayjs from "dayjs";
-import type { TimeIntervalObject } from "@/global/global";
+import type { TimeIntervalObject } from "tomato";
 
 const dialogVisible = ref(false);
 
@@ -76,6 +76,7 @@ const isClose = (state:TimeIntervalObject) => {
 
   await navigator.clipboard.writeText(`(${text.join(" - ")}) ${window.tomatoNum}tm * ${window.timeInterval}minute`);
  }
+ 
 </script>
 <template>
   <el-row justify="space-between">

@@ -65,7 +65,7 @@
   */
   import { computed, defineProps } from "vue";
   import { dayjs, ElEmpty } from "element-plus";
-  import type {TimeIntervalObject} from "@/global/global"
+  import type {TimeIntervalObject} from "tomato"
 //  基于运行时推断
     const props = withDefaults(defineProps<{
         segments:TimeIntervalObject[]

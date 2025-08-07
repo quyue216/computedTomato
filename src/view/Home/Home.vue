@@ -15,7 +15,7 @@
   import { reactive, ref, watch, onMounted ,computed} from "vue";
   import useTimeToTm from "@/utils/useTimeToTm";
   import { initTimeInfo } from "@/utils/tools";
-  import type { TomatoConfig, TimeIntervalObject } from "../../global/global";
+  import type { TomatoConfig, TimeIntervalObject } from "tomato";
   import store from "store";
   import TmHeader from "@/components/TmHeader/TmHeader.vue"
   const CONFIG_OBJECT_CACHE = "CONFIG_OBJECT_CACHE"; //缓存数据的key

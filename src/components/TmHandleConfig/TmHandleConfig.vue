@@ -35,7 +35,7 @@ import {
     toRefs,
     watchEffect
 } from "vue";
-import type { TomatoConfig } from "../../global/global.d.ts";
+import type { TomatoConfig } from "tomato";
 import type { FormInstance} from 'element-plus'
 
 import {
