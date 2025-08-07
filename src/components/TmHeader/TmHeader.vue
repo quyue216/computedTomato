@@ -15,7 +15,7 @@ import TmHandleConfig from "../TmHandleConfig/TmHandleConfig.vue";
 import { ref, defineProps } from "vue";
 import store from "store";
 import dayjs from "dayjs";
-import type { TimeIntervalObject } from "tomato";
+import type { TimeIntervalObject, TomatoConfig } from "tomato";
 
 const dialogVisible = ref(false);
 
@@ -25,6 +25,8 @@ const props = defineProps<{
   timeInfo: [Date, Date];
   updateTimeInfo: (times: [Date, Date]) => void;
   segments: TimeIntervalObject[];
+  configData: TomatoConfig;
+  updateConfigData: (data: TomatoConfig) => void;
 }>();
 
 //! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
@@ -89,20 +91,23 @@ const copyTime = async () => {
     workTm.forEach((item) => {
       const curCount = tempObj[item.timeInterval] || 0;
       tempObj[item.timeInterval] = curCount + 1;
-    })
+    });
 
     Object.entries(tempObj).forEach((item) => {
       const [key, value] = item; //key 时间间隔 value 次数
 
       return tempArr.push({
         timeStr: `${value}*tm${key}*m`,
-        tomatoCount: value+'',
+        tomatoCount: value + "",
       });
-    })
+    });
 
-    return tempArr.sort((a,b)=>{
-      return Number(b.tomatoCount) - Number(a.tomatoCount);
-    }).map(item=>item.timeStr).join(" + ");
+    return tempArr
+      .sort((a, b) => {
+        return Number(b.tomatoCount) - Number(a.tomatoCount);
+      })
+      .map((item) => item.timeStr)
+      .join(" + ");
   };
 
   await navigator.clipboard.writeText(
@@ -137,8 +142,9 @@ const copyTime = async () => {
   <tm-handle-config
     v-model="dialogVisible"
     ref="dialogIns"
-    v-bind="$attrs"
-  ></tm-handle-config>
+    :config-data="configData"
+    :update-config-data="updateConfigData"
+  />
 </template>
 
 <style scoped></style>
