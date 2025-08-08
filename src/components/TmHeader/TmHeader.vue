@@ -7,6 +7,7 @@ import {
   ElRow,
   ElCol,
   ElButton,
+  ElButtonGroup,
   ElTimePicker,
   ElDivider,
   ElMessage,
@@ -117,10 +118,10 @@ const copyTime = async () => {
   );
 
   ElMessage({
-      message: "复制成功", //让其设置为无效
-      type: "success",
-      duration: 3000,
-    });
+    message: "复制成功", //让其设置为无效
+    type: "success",
+    duration: 3000,
+  });
 };
 </script>
 <template>
@@ -138,11 +139,15 @@ const copyTime = async () => {
     <el-col :span="3" :offset="1" :xs="6">
       <el-button @click="dialogVisible = true" type="info">设置</el-button>
     </el-col>
-     <el-col :span="4" :offset="1" :xs="6">
-      <el-button type="warning" @click="$emit('merge-tomato')" >合并</el-button>
-      <el-button @click="$emit('cancel-merge-tomato')">取消合并</el-button>
+    <el-col :span="4" :offset="1" :xs="6">
+      <el-button-group>
+        <el-button type="warning" @click="$emit('merge-tomato')"
+          >合并</el-button
+        >
+        <el-button @click="$emit('cancel-merge-tomato')">取消合并</el-button>
+      </el-button-group>
     </el-col>
-     <el-col :span="3" :offset="1" :xs="6">
+    <el-col :span="3" :offset="1" :xs="6">
       <el-button type="primary" @click="copyTime">复制</el-button>
     </el-col>
   </el-row>

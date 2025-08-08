@@ -218,6 +218,12 @@ const setMergeInfo = (
 
   return segments;
 };
+
+const cancelMergeTomato = () => {
+  info.configData.mergeInfo = [];
+  ElMessage.success("取消合并成功");
+}
+
 </script>
 <template>
   <div class="common-layout">
@@ -235,7 +241,7 @@ const setMergeInfo = (
               :config-data="info.configData"
               :update-config-data="updateConfigData"
               @merge-tomato="mergeTomato"
-              @cancel-merge-tomato="info.configData.mergeInfo = []"
+              @cancel-merge-tomato="cancelMergeTomato"
             ></tm-header>
           </el-col>
         </el-row>
