@@ -15,6 +15,8 @@ declare module "tomato" {
         count: number;
         endTime: number;
         highlight: boolean;
+        index: number;
+        // merged?: [number,number];
     }
 
     export interface Segments {
@@ -25,7 +27,6 @@ declare module "tomato" {
 
 
 }
-type myType = number;
 
 
 declare module "store"{

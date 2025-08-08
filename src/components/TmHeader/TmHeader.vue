@@ -29,6 +29,8 @@ const props = defineProps<{
   updateConfigData: (data: TomatoConfig) => void;
 }>();
 
+defineEmits(["merge-tomato", "cancel-merge-tomato"]);
+
 //! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
 const timeInterVal = ref<[Date, Date]>(props.timeInfo);
 
@@ -97,7 +99,7 @@ const copyTime = async () => {
       const [key, value] = item; //key 时间间隔 value 次数
 
       return tempArr.push({
-        timeStr: `${value}*tm${key}*m`,
+        timeStr: `${value}tm * ${key}m`,
         tomatoCount: value + "",
       });
     });
@@ -113,6 +115,12 @@ const copyTime = async () => {
   await navigator.clipboard.writeText(
     `(${text.join(" - ")}) ${tmSegmentToStr(props.segments)}`
   );
+
+  ElMessage({
+      message: "复制成功", //让其设置为无效
+      type: "success",
+      duration: 3000,
+    });
 };
 </script>
 <template>
@@ -127,10 +135,14 @@ const copyTime = async () => {
         @visible-change="isClose"
       />
     </el-col>
-    <el-col :span="3" :offset="3" :xs="6">
+    <el-col :span="3" :offset="1" :xs="6">
       <el-button @click="dialogVisible = true" type="info">设置</el-button>
     </el-col>
-    <el-col :span="3" :offset="1" :xs="6">
+     <el-col :span="4" :offset="1" :xs="6">
+      <el-button type="warning" @click="$emit('merge-tomato')" >合并</el-button>
+      <el-button @click="$emit('cancel-merge-tomato')">取消合并</el-button>
+    </el-col>
+     <el-col :span="3" :offset="1" :xs="6">
       <el-button type="primary" @click="copyTime">复制</el-button>
     </el-col>
   </el-row>

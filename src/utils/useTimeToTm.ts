@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import type { TomatoConfig, TimeIntervalObject } from "@/global/global";
+import type { TomatoConfig, TimeIntervalObject } from "tomato";
 
 export default function useTimeTm(configData: TomatoConfig,
   timesInfo: [Date, Date]) {
