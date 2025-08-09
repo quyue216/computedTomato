@@ -97,7 +97,8 @@ watch(
 // 表示当前系统的高亮
 onMounted(() => {
   setInterval(() => {
-    if(!selectedSegments.value.length){
+    // 当没有选择时间段的时候，高亮计算才开启
+    if (!selectedSegments.value.length) {
       startUnix.value = dayjs().valueOf();
     }
   }, 3000);
@@ -105,15 +106,15 @@ onMounted(() => {
 
 const saveNewSegments = computed(() => {
   // if (selectedSegments.value.length === 0) {
-    saveSegments.value.forEach((item, index) => {
-      if (item.id < startUnix.value && item.endTime > startUnix.value) {
-        if (index > 0) {
-          //关闭掉上次的高亮，切换之后关闭掉上次的，只要大于0说明是又前面切换过来
-          saveSegments.value[index - 1].highlight = false;
-        }
-        item.highlight = true;
+  saveSegments.value.forEach((item, index) => {
+    if (item.id < startUnix.value && item.endTime > startUnix.value) {
+      if (index > 0) {
+        //关闭掉上次的高亮，切换之后关闭掉上次的，只要大于0说明是又前面切换过来
+        saveSegments.value[index - 1].highlight = false;
       }
-    });
+      item.highlight = true;
+    }
+  });
   // }
 
   if (info.configData?.mergeInfo?.length) {
@@ -132,6 +133,8 @@ const saveNewSegments = computed(() => {
 1. merges的长度必须未偶数
 2. 合并的索引必须是连续的
 */
+type  towNumTuple = [number, number];
+
 const mergeTomato = () => {
   if (selectedSegments.value.length === 0) {
     ElMessage.warning("请选择要合并的番茄时间段");
@@ -165,15 +168,9 @@ const mergeTomato = () => {
   const mergeInfo = info.configData.mergeInfo ?? [];
 
   if (mergeInfo.length === 0) {
-    info.configData.mergeInfo = [firstSegment.index, lastSegment.index + 1] as [
-      number,
-      number
-    ];
+    info.configData.mergeInfo = [firstSegment.index, lastSegment.index + 1] as towNumTuple
   } else {
-    const tempMergeInfo = [firstSegment.index, mergeInfo[1]] as [
-      number,
-      number
-    ];
+    const tempMergeInfo = [firstSegment.index, mergeInfo[1]] as towNumTuple;
     info.configData.mergeInfo = tempMergeInfo;
   }
   // 清空选择
@@ -185,6 +182,7 @@ const setMergeInfo = (
   selectedSegments: TimeIntervalObject[],
   segments: TimeIntervalObject[]
 ) => {
+  // 时间片段进行排序
   const sortedSegments = [...selectedSegments].sort(
     (a, b) => a.index - b.index
   );
@@ -208,9 +206,9 @@ const setMergeInfo = (
     (pre, cur) => pre + cur.timeInterval,
     0
   );
-
+  // 替换原始数组中的元素
   segments.splice(firstSegment.index, sortedSegments.length, mergedSegment);
-
+  // 更新索引
   segments = segments.map((item, i) => ({
     ...item,
     index: i,
@@ -219,11 +217,11 @@ const setMergeInfo = (
   return segments;
 };
 
+// 取消合并番茄
 const cancelMergeTomato = () => {
   info.configData.mergeInfo = [];
   ElMessage.success("取消合并成功");
-}
-
+};
 </script>
 <template>
   <div class="common-layout">
