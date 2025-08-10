@@ -11,6 +11,7 @@ import {
   ElTimePicker,
   ElDivider,
   ElMessage,
+  ElIcon,
 } from "element-plus";
 import TmHandleConfig from "../TmHandleConfig/TmHandleConfig.vue";
 import { ref, defineProps } from "vue";
@@ -30,7 +31,7 @@ const props = defineProps<{
   updateConfigData: (data: TomatoConfig) => void;
 }>();
 
-defineEmits(["merge-tomato", "cancel-merge-tomato"]);
+defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info"]);
 
 //! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
 const timeInterVal = ref<[Date, Date]>(props.timeInfo);
@@ -123,8 +124,8 @@ const copyTime = async () => {
 };
 </script>
 <template>
-  <el-row justify="space-between">
-    <el-col :span="11" :xs="24">
+  <el-row justify="center" align="middle">
+    <el-col :span="8" :xs="24">
       <el-time-picker
         is-range
         range-separator="To"
@@ -135,14 +136,29 @@ const copyTime = async () => {
       />
     </el-col>
 
-    <el-col :span="12" :offset="1" :xs="24">
+    <el-col :span="10"  :xs="24">
       <el-button-group>
-        <el-button @click="dialogVisible = true" type="info">设置</el-button>
         <el-button type="warning" @click="$emit('merge-tomato')"
-          >合并</el-button
+          >merge</el-button
         >
-        <el-button @click="$emit('cancel-merge-tomato')">取消合并</el-button>
-        <el-button type="primary" @click="copyTime">复制</el-button>
+        <el-button  type="warning" @click="$emit('cancel-merge-tomato')"
+          >cancel Merge</el-button
+        >
+        <el-button type="primary" @click="copyTime">copy</el-button>
+        <el-button @click="dialogVisible = true" type="info">setting</el-button>
+        <el-button type="danger" @click="$emit('clear-history-time-info')">clear</el-button>
+      </el-button-group>
+    </el-col>
+
+    <el-col :span="4" :xs="24">
+      <el-button-group>
+        <el-button type="primary"
+          >
+          <el-icon><ArrowLeft /></el-icon>
+        </el-button>
+        <el-button type="primary">
+          <el-icon><ArrowRight /></el-icon>
+        </el-button>
       </el-button-group>
     </el-col>
   </el-row>
