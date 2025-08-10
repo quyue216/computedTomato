@@ -98,10 +98,7 @@
         result.push(arr[1].count);
         result.push(arr[0].count);
       }
-      // 方便复制保存番茄信息
-      // window.tomatoNum = result[0];
-      console.log("arr",arr);
-      // window.timeInterval = result[0].timeInterval
+     
       return result;
     });
   

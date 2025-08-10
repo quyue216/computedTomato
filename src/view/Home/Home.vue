@@ -51,6 +51,14 @@ const updateConfigData = (config: TomatoConfig) => {
 
 // 更新用户选择的时间
 const updateTimeInfo = (times: [Date, Date]) => {
+  const isChange = info.timeInfo.every((item, i) => {
+    return times[i].toString() !== item.toString();
+  });
+  if (isChange) {
+    //时间发生变化，segments需要重新计算
+    info.configData.mergeInfo = []; // 清除合并信息
+    selectedSegments.value = []; // 清除选中的时间段
+  }
   info.timeInfo = times;
 };
 // 1.有缓存读取缓存数据，无缓存生成最近两小时时间
@@ -133,7 +141,7 @@ const saveNewSegments = computed(() => {
 1. merges的长度必须未偶数
 2. 合并的索引必须是连续的
 */
-type  towNumTuple = [number, number];
+type towNumTuple = [number, number];
 
 const mergeTomato = () => {
   if (selectedSegments.value.length === 0) {
@@ -168,7 +176,10 @@ const mergeTomato = () => {
   const mergeInfo = info.configData.mergeInfo ?? [];
 
   if (mergeInfo.length === 0) {
-    info.configData.mergeInfo = [firstSegment.index, lastSegment.index + 1] as towNumTuple
+    info.configData.mergeInfo = [
+      firstSegment.index,
+      lastSegment.index + 1,
+    ] as towNumTuple;
   } else {
     const tempMergeInfo = [firstSegment.index, mergeInfo[1]] as towNumTuple;
     info.configData.mergeInfo = tempMergeInfo;

@@ -68,8 +68,6 @@ const isClose = (state: TimeIntervalObject) => {
   }
 };
 
-console.log(props.segments, "---------HHHHH");
-
 // 复制函数
 const copyTime = async () => {
   let text = props.timeInfo.reduce((pre: string[], item: Date) => {
@@ -136,19 +134,16 @@ const copyTime = async () => {
         @visible-change="isClose"
       />
     </el-col>
-    <el-col :span="3" :offset="1" :xs="6">
-      <el-button @click="dialogVisible = true" type="info">设置</el-button>
-    </el-col>
-    <el-col :span="4" :offset="1" :xs="6">
+
+    <el-col :span="12" :offset="1" :xs="24">
       <el-button-group>
+        <el-button @click="dialogVisible = true" type="info">设置</el-button>
         <el-button type="warning" @click="$emit('merge-tomato')"
           >合并</el-button
         >
         <el-button @click="$emit('cancel-merge-tomato')">取消合并</el-button>
+        <el-button type="primary" @click="copyTime">复制</el-button>
       </el-button-group>
-    </el-col>
-    <el-col :span="3" :offset="1" :xs="6">
-      <el-button type="primary" @click="copyTime">复制</el-button>
     </el-col>
   </el-row>
   <!-- 分隔线组件 -->
