@@ -31,7 +31,7 @@ const props = defineProps<{
   updateConfigData: (data: TomatoConfig) => void;
 }>();
 
-defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info"]);
+defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
 
 //! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
 const timeInterVal = defineModel<[Date, Date]>();
@@ -152,11 +152,11 @@ const copyTime = async () => {
 
     <el-col :span="4" :xs="24">
       <el-button-group>
-        <el-button type="primary"
+        <el-button type="primary" @click="$emit('switch-history','prev')"
           >
-          <el-icon><ArrowLeft /></el-icon>
+          <el-icon ><ArrowLeft /></el-icon>
         </el-button>
-        <el-button type="primary">
+        <el-button type="primary"  @click="$emit('switch-history','next')">
           <el-icon><ArrowRight /></el-icon>
         </el-button>
       </el-button-group>

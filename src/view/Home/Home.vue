@@ -36,6 +36,9 @@ const info = reactive<{
   timeInfo: initTimeInfo() as [Date, Date],
   onlyShowTm: false,
 });
+
+type timeInfoType = typeof info.timeInfo;
+
 // 设置时间戳
 const startUnix = ref(dayjs().valueOf());
 // 保存生成的时间数据对象
@@ -45,7 +48,7 @@ const selectedSegments = ref<Array<TimeIntervalObject>>([]);
 // 历史记录
 const historyTimeInfo = ref<Array<[Date, Date]>>([]);
 // 默认指向顶层
-const pointerHistory = ref(0);
+let pointerHistory = 0;
 
 selectInitTime();
 
@@ -55,7 +58,7 @@ const updateConfigData = (config: TomatoConfig) => {
 };
 
 // 更新用户选择的时间
-const updateTimeInfo = (times: [Date, Date]) => {
+const updateTimeInfo = (times: timeInfoType) => {
   // 当次选择发生变化
   const isChange = info.timeInfo.every((item, i) => {
     return times[i].toString() !== item.toString();
@@ -73,6 +76,7 @@ function selectInitTime() {
   // 没有缓存自动生成时间区间
   if (!store.get(CONFIG_OBJECT_CACHE)) {
     info.timeInfo = initTimeInfo() as [Date, Date];
+    pushHistoryTimeInfo(info.timeInfo);
   } else {
     let { configData, timeInfo } = store.get(CONFIG_OBJECT_CACHE);
 
@@ -82,9 +86,9 @@ function selectInitTime() {
       store.remove(CONFIG_OBJECT_CACHE); //时间过期清除,获取初始化时间
 
       info.timeInfo = initTimeInfo() as [Date, Date];
+      pushHistoryTimeInfo(info.timeInfo); //缓存起来
     } else {
       info.timeInfo = timeInfo;
-
       info.configData = configData;
     }
   }
@@ -114,7 +118,7 @@ onMounted(() => {
   // 初始化时从缓存中读取历史记录
   historyTimeInfo.value = store.get(HISTORY_TIME_INFO) || [];
   // 初始化历史记录指针
-  pointerHistory.value = historyTimeInfo.value.length - 1;
+  pointerHistory = historyTimeInfo.value.length - 1;
 
   setInterval(() => {
     // 当没有选择时间段的时候，高亮计算才开启
@@ -255,7 +259,7 @@ const pushHistoryTimeInfo = (times: [Date, Date]) => {
     );
   });
 
-  if(isExist) return; // 如果已经存在，则不添加
+  if (isExist) return; // 如果已经存在，则不添加
 
   // 将当前时间信息添加到历史记录中
   historyTimeInfo.value.push([...info.timeInfo]);
@@ -273,6 +277,30 @@ const clearHistoryTimeInfo = () => {
 
   ElMessage.success("清空历史记录成功");
 };
+let index = 0;
+// 切换历史记录
+const switchHistory = (type: "next" | "prev") => {
+  let oldIndex = index; // 记录上一次的索引
+  if (type === "next") {
+    index++;
+    if (index >= historyTimeInfo.value.length) {
+      index = historyTimeInfo.value.length - 1;
+    }
+  } else {
+    index--;
+    if (index < 0) {
+      index = 0;
+    }
+  }
+  if(oldIndex === index) {
+    ElMessage.warning("没有更多的历史记录了");
+    return;
+  }
+  // 更新当前时间信息
+  info.timeInfo = historyTimeInfo.value[index];
+  
+   ElMessage.success("切换历史记录成功");
+};
 </script>
 <template>
   <div class="common-layout">
@@ -284,7 +312,7 @@ const clearHistoryTimeInfo = () => {
           <el-col>
             <!-- 头部组件 -->
             <tm-header
-              :time-info="info.timeInfo"
+              v-model="info.timeInfo"
               :segments="saveNewSegments"
               :update-time-info="updateTimeInfo"
               :config-data="info.configData"
@@ -292,6 +320,7 @@ const clearHistoryTimeInfo = () => {
               @merge-tomato="mergeTomato"
               @cancel-merge-tomato="cancelMergeTomato"
               @clear-history-time-info="clearHistoryTimeInfo"
+              @switch-history="switchHistory"
             ></tm-header>
           </el-col>
         </el-row>
