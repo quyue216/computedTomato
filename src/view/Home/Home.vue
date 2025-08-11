@@ -19,11 +19,12 @@ import type { TomatoConfig, TimeIntervalObject } from "tomato";
 import store from "store";
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
 const CONFIG_OBJECT_CACHE = "CONFIG_OBJECT_CACHE"; //缓存数据的key
-
+const HISTORY_TIME_INFO = "HISTORY_TIME_INFO"; //历史记录的key
 const info = reactive<{
   configData: Merge<TomatoConfig, { mergeInfo?: [number, number] | [] }>;
   timeInfo: [Date, Date];
   onlyShowTm: boolean;
+  // historyTimeInfo:Array<[Date, Date]>
 }>({
   configData: {
     tomatoTimeSize: 30,
@@ -41,6 +42,10 @@ const startUnix = ref(dayjs().valueOf());
 const saveSegments = ref<Array<TimeIntervalObject>>([]);
 // 选择的时间数据
 const selectedSegments = ref<Array<TimeIntervalObject>>([]);
+// 历史记录
+const historyTimeInfo = ref<Array<[Date, Date]>>([]);
+// 默认指向顶层
+const pointerHistory = ref(0);
 
 selectInitTime();
 
@@ -51,6 +56,7 @@ const updateConfigData = (config: TomatoConfig) => {
 
 // 更新用户选择的时间
 const updateTimeInfo = (times: [Date, Date]) => {
+  // 当次选择发生变化
   const isChange = info.timeInfo.every((item, i) => {
     return times[i].toString() !== item.toString();
   });
@@ -60,6 +66,7 @@ const updateTimeInfo = (times: [Date, Date]) => {
     selectedSegments.value = []; // 清除选中的时间段
   }
   info.timeInfo = times;
+  pushHistoryTimeInfo(times); // 将当前时间信息添加到历史记录中
 };
 // 1.有缓存读取缓存数据，无缓存生成最近两小时时间
 function selectInitTime() {
@@ -104,6 +111,11 @@ watch(
 );
 // 表示当前系统的高亮
 onMounted(() => {
+  // 初始化时从缓存中读取历史记录
+  historyTimeInfo.value = store.get(HISTORY_TIME_INFO) || [];
+  // 初始化历史记录指针
+  pointerHistory.value = historyTimeInfo.value.length - 1;
+
   setInterval(() => {
     // 当没有选择时间段的时候，高亮计算才开启
     if (!selectedSegments.value.length) {
@@ -144,16 +156,15 @@ const saveNewSegments = computed(() => {
 type towNumTuple = [number, number];
 
 const mergeTomato = () => {
-  if (selectedSegments.value.length === 0) {
+  if (selectedSegments.value.length > 1) {
     ElMessage.warning("请选择要合并的番茄时间段");
     return;
   }
-
-  // 检查是否为偶数
+  /* // 检查是否为偶数
   if (selectedSegments.value.length % 2 !== 0) {
     ElMessage.error("合并的番茄数量必须为偶数");
     return;
-  }
+  } */
   // 获取排序后的索引
   const sortedSegments = [...selectedSegments.value].sort(
     (a, b) => a.index - b.index
@@ -233,6 +244,35 @@ const cancelMergeTomato = () => {
   info.configData.mergeInfo = [];
   ElMessage.success("取消合并成功");
 };
+
+//----------历史记录---------
+const pushHistoryTimeInfo = (times: [Date, Date]) => {
+  //判断是否存在
+  const isExist = historyTimeInfo.value.some((date) => {
+    return (
+      date[0].toString() === times[0].toString() &&
+      date[1].toString() === times[1].toString()
+    );
+  });
+
+  if(isExist) return; // 如果已经存在，则不添加
+
+  // 将当前时间信息添加到历史记录中
+  historyTimeInfo.value.push([...info.timeInfo]);
+
+  // 限制历史记录的长度为10条
+  store.set(HISTORY_TIME_INFO, historyTimeInfo.value);
+};
+
+// 清空历史记录
+const clearHistoryTimeInfo = () => {
+  // 保留当前时间信息
+  historyTimeInfo.value = [[...info.timeInfo]];
+
+  store.set(HISTORY_TIME_INFO, historyTimeInfo.value);
+
+  ElMessage.success("清空历史记录成功");
+};
 </script>
 <template>
   <div class="common-layout">
@@ -251,6 +291,7 @@ const cancelMergeTomato = () => {
               :update-config-data="updateConfigData"
               @merge-tomato="mergeTomato"
               @cancel-merge-tomato="cancelMergeTomato"
+              @clear-history-time-info="clearHistoryTimeInfo"
             ></tm-header>
           </el-col>
         </el-row>

@@ -24,7 +24,7 @@ const dialogVisible = ref(false);
 const MIN_MINUTE = 30;
 
 const props = defineProps<{
-  timeInfo: [Date, Date];
+  // timeInfo: [Date, Date];
   updateTimeInfo: (times: [Date, Date]) => void;
   segments: TimeIntervalObject[];
   configData: TomatoConfig;
@@ -34,7 +34,7 @@ const props = defineProps<{
 defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info"]);
 
 //! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
-const timeInterVal = ref<[Date, Date]>(props.timeInfo);
+const timeInterVal = defineModel<[Date, Date]>();
 
 // 关闭配置对话框
 //! watch始终无法执行，不清楚原因暂时
@@ -71,7 +71,7 @@ const isClose = (state: TimeIntervalObject) => {
 
 // 复制函数
 const copyTime = async () => {
-  let text = props.timeInfo.reduce((pre: string[], item: Date) => {
+  let text = timeInterVal.value!.reduce((pre: string[], item: Date) => {
     pre.push(dayjs(item).format("MM-DD HH:mm"));
     return pre;
   }, []);

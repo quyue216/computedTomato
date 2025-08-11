@@ -21,6 +21,6 @@ export const initTimeInfo = () => {
        
       }
     
-     return [startTime,endTime];
+     return [startTime,endTime] as [Date,Date];
 };
 

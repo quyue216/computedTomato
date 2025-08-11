@@ -15,7 +15,7 @@ declare module "tomato" {
         count: number;
         endTime: number;
         highlight: boolean;
-        index?: number;
+        index: number;
         // merged?: [number,number];
     }
 

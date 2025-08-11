@@ -38,7 +38,7 @@ export default function useTimeTm(configData: TomatoConfig,
       return tmCount % happenBigSegment === 0 ? bigRestTimeSize : restTimeSize;
     }
   }
-
+  let i =0;
   // 生成时间段信息
   for (let timestamp = startTimestamp; timestamp < endTimestamp;) { //这里条件不等于
 
@@ -113,7 +113,8 @@ export default function useTimeTm(configData: TomatoConfig,
       type: isWork, //标识是番茄还是休息
       count: isWork ? tmCount : restCount,
       endTime: endTimeObj.valueOf(), //结束时间
-      highlight: false
+      highlight: false,
+      index: i++ //索引
     });
 
     isWork = !isWork;
