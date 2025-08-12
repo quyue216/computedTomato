@@ -16,7 +16,6 @@ import { reactive, ref, watch, onMounted, computed } from "vue";
 import useTimeToTm from "@/utils/useTimeToTm";
 import { initTimeInfo } from "@/utils/tools";
 import type { TomatoConfig, TimeIntervalObject } from "tomato";
-import store from "store";
 import * as storeUtils from '@/utils/storeUtils'
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
 const CONFIG_OBJECT_CACHE = "CONFIG_OBJECT_CACHE"; //缓存数据的key
@@ -61,7 +60,7 @@ enum HistoryPointerAction {
   newest = 'newest',
 }
 // 重新计算历史记录
-const countHtyPointer = (hisLen:number,type: HistoryPointerAction)=>{
+function countHtyPointer(hisLen:number,type: HistoryPointerAction){
 
   if(type === 'increase'){
     pointerHistory++;
@@ -78,6 +77,7 @@ const countHtyPointer = (hisLen:number,type: HistoryPointerAction)=>{
   }else if(type === 'newest'){
     pointerHistory = hisLen - 1;
   }
+  console.log(pointerHistory,'---------');
 }
 
 // 更新配置对象 ?改为v-model
@@ -105,11 +105,11 @@ const updateTimeInfo = (times: timeInfoType) => {
 // 1.有缓存读取缓存数据，无缓存生成最近两小时时间
 function selectInitTime() {
   // 没有缓存自动生成时间区间
-  if (!store.get(CONFIG_OBJECT_CACHE)) {
+  if (!storeUtils.getLocalStorage(CONFIG_OBJECT_CACHE)) {
     info.timeInfo = initTimeInfo()  as Tuple2<Date>;
     pushHistoryTimeInfo(info.timeInfo);
   } else {
-    let { configData, timeInfo } = store.get(CONFIG_OBJECT_CACHE);
+    let { configData, timeInfo } = storeUtils.getLocalStorage(CONFIG_OBJECT_CACHE);
 
     const currentTime = dayjs().valueOf();
     // 当前时间大于缓存的截止时间。那么使用默认时间
@@ -149,7 +149,8 @@ watch(
 // 表示当前系统的高亮
 onMounted(() => {
   // 初始化时从缓存中读取历史记录
-  historyTimeInfo.value = store.get(HISTORY_TIME_INFO) || [];
+  historyTimeInfo.value = storeUtils.getLocalStorage(HISTORY_TIME_INFO) || [];
+
   // 初始化历史记录指针
   countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
 
@@ -314,24 +315,16 @@ const clearHistoryTimeInfo = () => {
 };
 
 // 切换历史记录
-const switchHistory = (type: "next" | "prev") => {
-  
+const switchHistory = (type: HistoryPointerAction) => {
+
   let oldIndex = pointerHistory; // 记录上一次的索引
-
-  if (type === "next") {
- 
-    countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.increase);
-  } else if (type === "prev") {
-   
-    countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.decrease);
-  } 
-
+  countHtyPointer(historyTimeInfo.value.length, type);
   if(oldIndex === pointerHistory) {
     return ElMessage.warning("没有更多的历史记录了");
   }
   // 更新当前时间信息 countHtyPointer保证不会越界
   info.timeInfo = historyTimeInfo.value[pointerHistory];
-  
+
    ElMessage.success("切换历史记录成功");
 };
 </script>

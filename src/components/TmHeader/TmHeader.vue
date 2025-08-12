@@ -152,11 +152,11 @@ const copyTime = async () => {
 
     <el-col :span="4" :xs="24">
       <el-button-group>
-        <el-button type="primary" @click="$emit('switch-history','prev')"
+        <el-button type="primary" @click="$emit('switch-history','decrease')"
           >
           <el-icon ><ArrowLeft /></el-icon>
         </el-button>
-        <el-button type="primary"  @click="$emit('switch-history','next')">
+        <el-button type="primary"  @click="$emit('switch-history','increase')">
           <el-icon><ArrowRight /></el-icon>
         </el-button>
       </el-button-group>
