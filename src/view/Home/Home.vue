@@ -17,9 +17,11 @@ import useTimeToTm from "@/utils/useTimeToTm";
 import { initTimeInfo } from "@/utils/tools";
 import type { TomatoConfig, TimeIntervalObject } from "tomato";
 import store from "store";
+import * as storeUtils from '@/utils/storeUtils'
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
 const CONFIG_OBJECT_CACHE = "CONFIG_OBJECT_CACHE"; //缓存数据的key
 const HISTORY_TIME_INFO = "HISTORY_TIME_INFO"; //历史记录的key
+
 const info = reactive<{
   configData: Merge<TomatoConfig, { mergeInfo?: [number, number] | [] }>;
   timeInfo: [Date, Date];
@@ -52,7 +54,33 @@ let pointerHistory = 0;
 
 selectInitTime();
 
-// 更新配置对象
+enum HistoryPointerAction {
+  increase = 'increase',
+  decrease = 'decrease',
+  rest = 'rest',
+  newest = 'newest',
+}
+// 重新计算历史记录
+const countHtyPointer = (hisLen:number,type: HistoryPointerAction)=>{
+
+  if(type === 'increase'){
+    pointerHistory++;
+    if (hisLen) {
+      pointerHistory = hisLen- 1;
+    }
+  }else if(type === 'decrease'){
+    pointerHistory--;
+    if(pointerHistory < 0){
+      pointerHistory = 0;
+    }
+  }else if(type === 'rest'){
+    pointerHistory = 0;
+  }else if(type === 'newest'){
+    pointerHistory = hisLen - 1;
+  }
+}
+
+// 更新配置对象 ?改为v-model
 const updateConfigData = (config: TomatoConfig) => {
   info.configData = config;
 };
@@ -63,19 +91,22 @@ const updateTimeInfo = (times: timeInfoType) => {
   const isChange = info.timeInfo.every((item, i) => {
     return times[i].toString() !== item.toString();
   });
+  // 清楚合并信息
   if (isChange) {
     //时间发生变化，segments需要重新计算
     info.configData.mergeInfo = []; // 清除合并信息
     selectedSegments.value = []; // 清除选中的时间段
   }
+
   info.timeInfo = times;
+  
   pushHistoryTimeInfo(times); // 将当前时间信息添加到历史记录中
 };
 // 1.有缓存读取缓存数据，无缓存生成最近两小时时间
 function selectInitTime() {
   // 没有缓存自动生成时间区间
   if (!store.get(CONFIG_OBJECT_CACHE)) {
-    info.timeInfo = initTimeInfo() as [Date, Date];
+    info.timeInfo = initTimeInfo()  as Tuple2<Date>;
     pushHistoryTimeInfo(info.timeInfo);
   } else {
     let { configData, timeInfo } = store.get(CONFIG_OBJECT_CACHE);
@@ -83,9 +114,11 @@ function selectInitTime() {
     const currentTime = dayjs().valueOf();
     // 当前时间大于缓存的截止时间。那么使用默认时间
     if (currentTime >= dayjs(timeInfo[1]).valueOf()) {
-      store.remove(CONFIG_OBJECT_CACHE); //时间过期清除,获取初始化时间
 
-      info.timeInfo = initTimeInfo() as [Date, Date];
+      storeUtils.removeLocalStorage(CONFIG_OBJECT_CACHE); //时间过期清除,获取初始化时间
+
+      info.timeInfo = initTimeInfo() as Tuple2<Date>;
+      
       pushHistoryTimeInfo(info.timeInfo); //缓存起来
     } else {
       info.timeInfo = timeInfo;
@@ -106,7 +139,7 @@ watch(
       ).map((item, i) => ({ ...item, index: i }));
 
       //  注意这里代码导致递归调用了,导致重复更新
-      store.set(CONFIG_OBJECT_CACHE, { configData, timeInfo }); //数据发生变化缓存数据
+      storeUtils.setLocalStorage(CONFIG_OBJECT_CACHE, { configData, timeInfo }); //数据发生变化缓存数据
     }
   },
   {
@@ -118,7 +151,7 @@ onMounted(() => {
   // 初始化时从缓存中读取历史记录
   historyTimeInfo.value = store.get(HISTORY_TIME_INFO) || [];
   // 初始化历史记录指针
-  pointerHistory = historyTimeInfo.value.length - 1;
+  countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
 
   setInterval(() => {
     // 当没有选择时间段的时候，高亮计算才开启
@@ -160,15 +193,11 @@ const saveNewSegments = computed(() => {
 type towNumTuple = [number, number];
 
 const mergeTomato = () => {
-  if (selectedSegments.value.length > 1) {
+  if (selectedSegments.value.length < 2) { // 至少需要两个时间段才能合并
     ElMessage.warning("请选择要合并的番茄时间段");
     return;
   }
-  /* // 检查是否为偶数
-  if (selectedSegments.value.length % 2 !== 0) {
-    ElMessage.error("合并的番茄数量必须为偶数");
-    return;
-  } */
+
   // 获取排序后的索引
   const sortedSegments = [...selectedSegments.value].sort(
     (a, b) => a.index - b.index
@@ -250,7 +279,7 @@ const cancelMergeTomato = () => {
 };
 
 //----------历史记录---------
-const pushHistoryTimeInfo = (times: [Date, Date]) => {
+function pushHistoryTimeInfo (times: [Date, Date]) {
   //判断是否存在
   const isExist = historyTimeInfo.value.some((date) => {
     return (
@@ -264,8 +293,11 @@ const pushHistoryTimeInfo = (times: [Date, Date]) => {
   // 将当前时间信息添加到历史记录中
   historyTimeInfo.value.push([...info.timeInfo]);
 
+  // pointerHistory = historyTimeInfo.value.length - 1; // 指向最新的记录
+  countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
   // 限制历史记录的长度为10条
-  store.set(HISTORY_TIME_INFO, historyTimeInfo.value);
+  // store.set(HISTORY_TIME_INFO, historyTimeInfo.value);
+  storeUtils.setLocalStorage(HISTORY_TIME_INFO, historyTimeInfo.value);
 };
 
 // 清空历史记录
@@ -273,31 +305,32 @@ const clearHistoryTimeInfo = () => {
   // 保留当前时间信息
   historyTimeInfo.value = [[...info.timeInfo]];
 
-  store.set(HISTORY_TIME_INFO, historyTimeInfo.value);
+  storeUtils.setLocalStorage(HISTORY_TIME_INFO, historyTimeInfo.value);
+  
+  // 重置指针
+  countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.rest);
 
   ElMessage.success("清空历史记录成功");
 };
-let index = 0;
+
 // 切换历史记录
 const switchHistory = (type: "next" | "prev") => {
-  let oldIndex = index; // 记录上一次的索引
+  
+  let oldIndex = pointerHistory; // 记录上一次的索引
+
   if (type === "next") {
-    index++;
-    if (index >= historyTimeInfo.value.length) {
-      index = historyTimeInfo.value.length - 1;
-    }
-  } else {
-    index--;
-    if (index < 0) {
-      index = 0;
-    }
+ 
+    countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.increase);
+  } else if (type === "prev") {
+   
+    countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.decrease);
+  } 
+
+  if(oldIndex === pointerHistory) {
+    return ElMessage.warning("没有更多的历史记录了");
   }
-  if(oldIndex === index) {
-    ElMessage.warning("没有更多的历史记录了");
-    return;
-  }
-  // 更新当前时间信息
-  info.timeInfo = historyTimeInfo.value[index];
+  // 更新当前时间信息 countHtyPointer保证不会越界
+  info.timeInfo = historyTimeInfo.value[pointerHistory];
   
    ElMessage.success("切换历史记录成功");
 };
