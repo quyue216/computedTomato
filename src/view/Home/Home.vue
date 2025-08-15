@@ -12,21 +12,17 @@ import {
 import TmDataToTable from "@/components/TmDataToTable/TmDataToTable.vue";
 import TmInfoCollect from "@/components/TmInfoCollect/TmInfoCollect.vue";
 import dayjs from "dayjs";
-import { reactive, ref, watch, onMounted, computed } from "vue";
+import { ref, watch, onMounted, computed, watchEffect } from "vue";
 import useTimeToTm from "@/utils/useTimeToTm";
 import { initTimeInfo } from "@/utils/tools";
 import type { TomatoConfig, TimeIntervalObject } from "tomato";
-import * as storeUtils from '@/utils/storeUtils'
+import { cloneDeep } from "lodash";
+import * as storeUtils from "@/utils/storeUtils";
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
 const CONFIG_OBJECT_CACHE = "CONFIG_OBJECT_CACHE"; //缓存数据的key
 const HISTORY_TIME_INFO = "HISTORY_TIME_INFO"; //历史记录的key
 
-const info = reactive<{
-  configData: Merge<TomatoConfig, { mergeInfo?: [number, number] | [] }>;
-  timeInfo: [Date, Date];
-  onlyShowTm: boolean;
-  // historyTimeInfo:Array<[Date, Date]>
-}>({
+const baseTomatoConfig: BaseTomatoConfig = {
   configData: {
     tomatoTimeSize: 30,
     restTimeSize: 5,
@@ -36,9 +32,9 @@ const info = reactive<{
   },
   timeInfo: initTimeInfo() as [Date, Date],
   onlyShowTm: false,
-});
+};
 
-type timeInfoType = typeof info.timeInfo;
+type timeInfoType = typeof baseTomatoConfig.timeInfo;
 
 // 设置时间戳
 const startUnix = ref(dayjs().valueOf());
@@ -47,99 +43,129 @@ const saveSegments = ref<Array<TimeIntervalObject>>([]);
 // 选择的时间数据
 const selectedSegments = ref<Array<TimeIntervalObject>>([]);
 // 历史记录
-const historyTimeInfo = ref<Array<[Date, Date]>>([]);
+const historyTimeInfo = ref<
+  Array<{
+    configData: Merge<TomatoConfig, { mergeInfo?: [number, number] | [] }>;
+    timeInfo: [Date, Date];
+    onlyShowTm: boolean;
+  }>
+>([]);
 // 默认指向顶层
-let pointerHistory = 0;
+let pointerHistory = ref(0);
+// 当前显示的历史记录
+/* const curShowHistory = computed({
+  get() {
+   
+  },
+  set(newValue) {
+    // 更新当前显示的历史记录
+    console.log(newValue, "--------");
+
+    // return
+  },
+}); */
+
+const curShowHistory = ref<BaseTomatoConfig>(cloneDeep(baseTomatoConfig));
+
+watchEffect(async () => {
+  if (historyTimeInfo.value.length === 0) {
+    //没有合并信息返回空对象, 避免影响到上层对象
+    curShowHistory.value = cloneDeep(baseTomatoConfig);
+  } else {
+    curShowHistory.value = historyTimeInfo.value[pointerHistory.value];
+  }
+});
 
 selectInitTime();
-
+// 定义一个枚举类型来表示历史记录指针的操作
 enum HistoryPointerAction {
-  increase = 'increase',
-  decrease = 'decrease',
-  rest = 'rest',
-  newest = 'newest',
+  increase = "increase",
+  decrease = "decrease",
+  rest = "rest",
+  newest = "newest",
 }
 // 重新计算历史记录
-function countHtyPointer(hisLen:number,type: HistoryPointerAction){
-
-  if(type === 'increase'){
-    pointerHistory++;
-    if (hisLen) {
-      pointerHistory = hisLen- 1;
+function countHtyPointer(hisLen: number, type: HistoryPointerAction) {
+  if (type === "increase") {
+    pointerHistory.value++;
+    if (hisLen <= pointerHistory.value) {
+      pointerHistory.value = hisLen - 1;
     }
-  }else if(type === 'decrease'){
-    pointerHistory--;
-    if(pointerHistory < 0){
-      pointerHistory = 0;
+  } else if (type === "decrease") {
+    pointerHistory.value--;
+    if (pointerHistory.value < 0) {
+      pointerHistory.value = 0;
     }
-  }else if(type === 'rest'){
-    pointerHistory = 0;
-  }else if(type === 'newest'){
-    pointerHistory = hisLen - 1;
+  } else if (type === "rest") {
+    pointerHistory.value = 0;
+  } else if (type === "newest") {
+    pointerHistory.value = hisLen - 1;
   }
-  console.log(pointerHistory,'---------');
 }
 
-// 更新配置对象 ?改为v-model
+
 const updateConfigData = (config: TomatoConfig) => {
-  info.configData = config;
+  curShowHistory.value.configData = config;
 };
 
 // 更新用户选择的时间
 const updateTimeInfo = (times: timeInfoType) => {
   // 当次选择发生变化
-  const isChange = info.timeInfo.every((item, i) => {
+  const isChange = curShowHistory.value.timeInfo.every((item, i) => {
     return times[i].toString() !== item.toString();
   });
   // 清楚合并信息
   if (isChange) {
     //时间发生变化，segments需要重新计算
-    info.configData.mergeInfo = []; // 清除合并信息
+    curShowHistory.value.configData.mergeInfo = []; // 清除合并信息
     selectedSegments.value = []; // 清除选中的时间段
   }
 
-  info.timeInfo = times;
-  
+  //curShowHistory.value.timeInfo = times; 将会创建最新记录
+
   pushHistoryTimeInfo(times); // 将当前时间信息添加到历史记录中
 };
 // 1.有缓存读取缓存数据，无缓存生成最近两小时时间
-function selectInitTime() {
+function selectInitTime(): void {
   // 没有缓存自动生成时间区间
   if (!storeUtils.getLocalStorage(CONFIG_OBJECT_CACHE)) {
-    info.timeInfo = initTimeInfo()  as Tuple2<Date>;
-    pushHistoryTimeInfo(info.timeInfo);
+    const timeInfo = initTimeInfo() as Tuple2<Date>;
+    pushHistoryTimeInfo(timeInfo);
   } else {
-    let { configData, timeInfo } = storeUtils.getLocalStorage(CONFIG_OBJECT_CACHE);
+    let historyTimeInfo = storeUtils.getLocalStorage(CONFIG_OBJECT_CACHE);
+
+    const topHis = historyTimeInfo[historyTimeInfo.length - 1];
 
     const currentTime = dayjs().valueOf();
     // 当前时间大于缓存的截止时间。那么使用默认时间
-    if (currentTime >= dayjs(timeInfo[1]).valueOf()) {
+    if (currentTime >= dayjs(topHis.timeInfo[1]).valueOf()) {
+      const timeInfo = initTimeInfo() as Tuple2<Date>;
 
-      storeUtils.removeLocalStorage(CONFIG_OBJECT_CACHE); //时间过期清除,获取初始化时间
-
-      info.timeInfo = initTimeInfo() as Tuple2<Date>;
-      
-      pushHistoryTimeInfo(info.timeInfo); //缓存起来
+      pushHistoryTimeInfo(timeInfo); //缓存起来
     } else {
-      info.timeInfo = timeInfo;
-      info.configData = configData;
+      pointerHistory.value = historyTimeInfo.length - 1; // 指向最新的记录
     }
   }
 }
 
 watch(
-  info,
+  curShowHistory,
   (info) => {
     const { configData, timeInfo } = info;
-
-    if (Object.entries(configData).length && timeInfo.length) {
+    // 如果配置数据不合法，直接返回
+    const configDataCheckSuccess = Object.values(configData).every(
+      (item) => item !== undefined
+    );
+    console.log(configDataCheckSuccess, timeInfo.length,"参数发生变化了");
+    
+    if (configDataCheckSuccess && timeInfo.length) {
       saveSegments.value = useTimeToTm(
         configData,
-        timeInfo as [Date, Date]
+        timeInfo as Tuple2<Date>
       ).map((item, i) => ({ ...item, index: i }));
 
       //  注意这里代码导致递归调用了,导致重复更新
-      storeUtils.setLocalStorage(CONFIG_OBJECT_CACHE, { configData, timeInfo }); //数据发生变化缓存数据
+      storeUtils.setLocalStorage(CONFIG_OBJECT_CACHE, historyTimeInfo.value); //数据发生变化缓存数据
     }
   },
   {
@@ -175,9 +201,9 @@ const saveNewSegments = computed(() => {
   });
   // }
 
-  if (info.configData?.mergeInfo?.length) {
+  if (curShowHistory.value.configData?.mergeInfo?.length) {
     const copySelectSegments = saveSegments.value.slice(
-      ...info.configData?.mergeInfo
+      ...curShowHistory.value.configData?.mergeInfo
     );
 
     return setMergeInfo(copySelectSegments, [...saveSegments.value]);
@@ -194,7 +220,8 @@ const saveNewSegments = computed(() => {
 type towNumTuple = [number, number];
 
 const mergeTomato = () => {
-  if (selectedSegments.value.length < 2) { // 至少需要两个时间段才能合并
+  if (selectedSegments.value.length < 2) {
+    // 至少需要两个时间段才能合并
     ElMessage.warning("请选择要合并的番茄时间段");
     return;
   }
@@ -218,16 +245,16 @@ const mergeTomato = () => {
   const firstSegment = sortedSegments[0];
   const lastSegment = sortedSegments[sortedSegments.length - 1];
 
-  const mergeInfo = info.configData.mergeInfo ?? [];
+  const mergeInfo = curShowHistory.value.configData.mergeInfo ?? [];
 
   if (mergeInfo.length === 0) {
-    info.configData.mergeInfo = [
+    curShowHistory.value.configData.mergeInfo = [
       firstSegment.index,
       lastSegment.index + 1,
     ] as towNumTuple;
   } else {
     const tempMergeInfo = [firstSegment.index, mergeInfo[1]] as towNumTuple;
-    info.configData.mergeInfo = tempMergeInfo;
+    curShowHistory.value.configData.mergeInfo = tempMergeInfo;
   }
   // 清空选择
   selectedSegments.value = [];
@@ -275,39 +302,40 @@ const setMergeInfo = (
 
 // 取消合并番茄
 const cancelMergeTomato = () => {
-  info.configData.mergeInfo = [];
+  curShowHistory.value.configData.mergeInfo = [];
   ElMessage.success("取消合并成功");
 };
 
 //----------历史记录---------
-function pushHistoryTimeInfo (times: [Date, Date]) {
+function pushHistoryTimeInfo(times: [Date, Date]) {
   //判断是否存在
-  const isExist = historyTimeInfo.value.some((date) => {
+  const isExist = historyTimeInfo.value.some(({ timeInfo }) => {
     return (
-      date[0].toString() === times[0].toString() &&
-      date[1].toString() === times[1].toString()
+      timeInfo[0].toString() === times[0].toString() &&
+      timeInfo[1].toString() === times[1].toString()
     );
   });
 
   if (isExist) return; // 如果已经存在，则不添加
 
-  // 将当前时间信息添加到历史记录中
-  historyTimeInfo.value.push([...info.timeInfo]);
+  let tempObj = Object.assign({}, baseTomatoConfig, {
+    timeInfo: times,
+  });
 
-  // pointerHistory = historyTimeInfo.value.length - 1; // 指向最新的记录
+  // 将当前时间信息添加到历史记录中
+  historyTimeInfo.value.push(tempObj);
+
   countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
   // 限制历史记录的长度为10条
-  // store.set(HISTORY_TIME_INFO, historyTimeInfo.value);
   storeUtils.setLocalStorage(HISTORY_TIME_INFO, historyTimeInfo.value);
-};
+}
 
 // 清空历史记录
 const clearHistoryTimeInfo = () => {
-  // 保留当前时间信息
-  historyTimeInfo.value = [[...info.timeInfo]];
+  historyTimeInfo.value = [historyTimeInfo.value.pop()!]; // 清空历史记录
 
   storeUtils.setLocalStorage(HISTORY_TIME_INFO, historyTimeInfo.value);
-  
+
   // 重置指针
   countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.rest);
 
@@ -316,16 +344,15 @@ const clearHistoryTimeInfo = () => {
 
 // 切换历史记录
 const switchHistory = (type: HistoryPointerAction) => {
-
   let oldIndex = pointerHistory; // 记录上一次的索引
+
   countHtyPointer(historyTimeInfo.value.length, type);
-  if(oldIndex === pointerHistory) {
+
+  if (oldIndex === pointerHistory) {
     return ElMessage.warning("没有更多的历史记录了");
   }
-  // 更新当前时间信息 countHtyPointer保证不会越界
-  info.timeInfo = historyTimeInfo.value[pointerHistory];
 
-   ElMessage.success("切换历史记录成功");
+  ElMessage.success("切换历史记录成功");
 };
 </script>
 <template>
@@ -336,12 +363,12 @@ const switchHistory = (type: HistoryPointerAction) => {
         <!-- 这里感觉冗余了 -->
         <el-row class="tm-header-bg">
           <el-col>
-            <!-- 头部组件 -->
+            <!-- 头部组件 v-model不太希望影响到原始的历史记录-->
             <tm-header
-              v-model="info.timeInfo"
+              v-model="curShowHistory.timeInfo"
               :segments="saveNewSegments"
               :update-time-info="updateTimeInfo"
-              :config-data="info.configData"
+              :config-data="curShowHistory.configData"
               :update-config-data="updateConfigData"
               @merge-tomato="mergeTomato"
               @cancel-merge-tomato="cancelMergeTomato"

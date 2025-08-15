@@ -42,3 +42,9 @@ declare module "store"{
     const store: Store;
     export default store;
 }
+// 基础的番茄配置
+type BaseTomatoConfig = {
+    configData: TomatoConfig;
+    timeInfo:Tuple2<Date>;
+    onlyShowTm: boolean;
+}
