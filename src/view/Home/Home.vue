@@ -57,8 +57,8 @@ enum HistoryPointerAction {
 
 const updateConfigData = (config: TomatoConfig) => {
   historyTimeInfo.value[pointerHistory.value].configData = config;
-  // 重新计算时间区间
-  // computedSegments(historyTimeInfo.value[pointerHistory.value]);
+
+  storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, `${pointerHistory.value}.configData`, config);
 };
 
 // 更新用户选择的时间
@@ -159,11 +159,11 @@ const saveNewSegments = computed(() => {
   });
   // }
 
-  if (historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo?.length) {
+  if (historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo?.length&&saveSegments.value.length) {
     const copySelectSegments = saveSegments.value.slice(
       ...historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo
     );
-
+    
     return setMergeInfo(copySelectSegments, [...saveSegments.value]);
   }
 
@@ -205,15 +205,18 @@ const mergeTomato = () => {
 
   const mergeInfo = historyTimeInfo.value[pointerHistory.value].configData.mergeInfo ?? [];
 
+  let newMergeInfo:Partial<towNumTuple> = [];
+
   if (mergeInfo.length === 0) {
-    historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = [
+    newMergeInfo = [
       firstSegment.index,
       lastSegment.index + 1,
-    ] as towNumTuple;
+    ];    
   } else {
-    const tempMergeInfo = [firstSegment.index, mergeInfo[1]] as towNumTuple;
-    historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = tempMergeInfo;
+    newMergeInfo [firstSegment.index, mergeInfo[1]] ;
   }
+  historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = newMergeInfo;
+  storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, `${pointerHistory.value}.configData.mergeInfo`, newMergeInfo);
   // 清空选择
   selectedSegments.value = [];
   ElMessage.success("合并成功");
@@ -261,12 +264,14 @@ const setMergeInfo = (
 // 取消合并番茄
 const cancelMergeTomato = () => {
   historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = [];
+  
+  storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, `${pointerHistory.value}.configData.mergeInfo`, []);
+  
   ElMessage.success("取消合并成功");
 };
 
 //----------历史记录---------
 function pushHistoryTimeInfo(times: [Date, Date]) {
-  console.log("执行了哈哈哈哈");
   
   // 读取本地缓存
   const bufferHis =
@@ -292,13 +297,9 @@ function pushHistoryTimeInfo(times: [Date, Date]) {
   countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
   // 限制历史记录的长度为10条
   // curHis才是原始的历史记录
-  const curHis = (storeUtils.getLocalStorage(HISTORY_TIME_INFO) ?? []) as Array<BaseTomatoConfig>
-  
-  curHis.push(tempObj)
-  
-  storeUtils.setLocalStorage(HISTORY_TIME_INFO, curHis);
+  const newHis = storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, historyTimeInfo.value.length.toString(), tempObj);
 
-  historyTimeInfo.value = curHis;
+  historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
 }
 
 // 清空历史记录
