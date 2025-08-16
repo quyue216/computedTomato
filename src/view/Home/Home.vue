@@ -274,13 +274,12 @@ function pushHistoryTimeInfo(times: [Date, Date]) {
       HISTORY_TIME_INFO
     ) as Array<BaseTomatoConfig>) ?? [];
     
-    console.log(bufferHis,"--------");
-    
+ 
   //判断是否存在
   const isExist = bufferHis.some(({ timeInfo }) => {
     return (
-      timeInfo[0].toString() === times[0].toString() &&
-      timeInfo[1].toString() === times[1].toString()
+      dayjs(times[0]).valueOf() === dayjs(timeInfo[0]).valueOf() &&
+      dayjs(times[1]).valueOf() === dayjs(timeInfo[1]).valueOf()
     );
   });
 
