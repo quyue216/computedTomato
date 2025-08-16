@@ -384,10 +384,10 @@ const isSwitchHistoryDisabledRight = computed(() => {
     <el-container>
       <el-header height="50px">
         <p>
-          当前历史记录共<span class="highlight-value">{{
+          历史记录共<span class="highlight-value">{{
             historyTimeInfo.length
           }}</span>
-          条当前历史记录指针<span class="highlight-value">{{
+          条，历史记录指针<span class="highlight-value">{{
             pointerHistory+1
           }}</span>
         </p>
