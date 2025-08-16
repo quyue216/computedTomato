@@ -128,22 +128,18 @@ function computedSegments(config: BaseTomatoConfig): void {
 
 watch(
   [
-    () => historyTimeInfo.value[pointerHistory.value]?.timeInfo,
-    () => historyTimeInfo.value[pointerHistory.value]?.configData,
+    () => historyTimeInfo?.value[pointerHistory.value]?.timeInfo,
+    () => historyTimeInfo?.value[pointerHistory.value]?.configData,
   ],
   () => {
     // if(newVal.timeInfo.toString() !== oldVal.timeInfo.toString()){
     computedSegments(historyTimeInfo.value[pointerHistory.value]);
-    // }
   }
 );
 
 // 表示当前系统的高亮
 onMounted(() => {
-  // 初始化时从缓存中读取历史记录
-  historyTimeInfo.value = storeUtils.getLocalStorage(HISTORY_TIME_INFO) || [];
 
-  computedSegments(historyTimeInfo.value[pointerHistory.value]);
   // 监听时间变化
   followTimeChangeDataState();
 });
@@ -290,7 +286,7 @@ const cancelMergeTomato = () => {
 };
 
 //----------历史记录---------
-function pushHistoryTimeInfo(times: [Date, Date]) {
+function pushHistoryTimeInfo(times: [Date, Date]):void {
   // 读取本地缓存
   const bufferHis =
     (storeUtils.getLocalStorage(
@@ -311,7 +307,6 @@ function pushHistoryTimeInfo(times: [Date, Date]) {
 
   tempObj.timeInfo = times;
 
-  countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
   // 限制历史记录的长度为10条
   // curHis才是原始的历史记录
   const newHis = storeUtils.updateLocalStorageItem(
@@ -320,7 +315,14 @@ function pushHistoryTimeInfo(times: [Date, Date]) {
     tempObj
   );
 
-  historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
+  if(!bufferHis.length){ 
+    historyTimeInfo.value = [tempObj]; //无缓存,在这完成初始化
+    computedSegments(tempObj);//计算时间片段不依赖指针
+    return;
+  }else{
+    historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
+  }
+  countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
 }
 
 // 清空历史记录
