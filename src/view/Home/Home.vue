@@ -13,7 +13,7 @@ import TmDataToTable from "@/components/TmDataToTable/TmDataToTable.vue";
 import TmInfoCollect from "@/components/TmInfoCollect/TmInfoCollect.vue";
 import dayjs from "dayjs";
 import { ref, watch, onMounted, computed, watchEffect } from "vue";
-import useTimeToTm from "@/utils/useTimeToTm";
+import configToSegments from "@/utils/configToSegments";
 import { initTimeInfo } from "@/utils/tools";
 import type { TomatoConfig, TimeIntervalObject } from "tomato";
 import { cloneDeep } from "lodash";
@@ -79,7 +79,6 @@ const updateTimeInfo = (times: timeInfoType) => {
   }
 
   historyTimeInfo.value[pointerHistory.value].timeInfo = times; //将会创建最新记录
- 
 
   pushHistoryTimeInfo(times); // 将当前时间信息添加到历史记录中
 };
@@ -121,7 +120,7 @@ function computedSegments(config: BaseTomatoConfig): void {
   );
 
   if (configDataCheckSuccess && timeInfo.length) {
-    saveSegments.value = useTimeToTm(configData, timeInfo as Tuple2<Date>).map(
+    saveSegments.value = configToSegments(configData, timeInfo as Tuple2<Date>).map(
       (item, i) => ({ ...item, index: i })
     );
   }
@@ -129,8 +128,8 @@ function computedSegments(config: BaseTomatoConfig): void {
 
 watch(
   [
-    () => historyTimeInfo.value[pointerHistory.value].timeInfo,
-    () => historyTimeInfo.value[pointerHistory.value].configData,
+    () => historyTimeInfo.value[pointerHistory.value]?.timeInfo,
+    () => historyTimeInfo.value[pointerHistory.value]?.configData,
   ],
   () => {
     // if(newVal.timeInfo.toString() !== oldVal.timeInfo.toString()){
@@ -369,11 +368,30 @@ function countHtyPointer(hisLen: number, type: HistoryPointerAction): void {
     pointerHistory.value = hisLen - 1;
   }
 }
+//切换历史记录禁用
+const isSwitchHistoryDisabledLeft = computed(() => {
+  return pointerHistory.value === 0;
+});
+
+//右侧切换禁用
+const isSwitchHistoryDisabledRight = computed(() => {
+  return pointerHistory.value === historyTimeInfo.value.length - 1;
+});
+
 </script>
 <template>
   <div class="common-layout">
     <el-container>
-      <el-header height="50px"> have fun </el-header>
+      <el-header height="50px">
+        <p>
+          当前历史记录共<span class="highlight-value">{{
+            historyTimeInfo.length
+          }}</span>
+          条当前历史记录指针<span class="highlight-value">{{
+            pointerHistory+1
+          }}</span>
+        </p>
+      </el-header>
       <el-main class="tm-main">
         <!-- 这里感觉冗余了 -->
         <el-row class="tm-header-bg">
@@ -389,6 +407,8 @@ function countHtyPointer(hisLen: number, type: HistoryPointerAction): void {
               @cancel-merge-tomato="cancelMergeTomato"
               @clear-history-time-info="clearHistoryTimeInfo"
               @switch-history="switchHistory"
+              :is-switch-history-disabled-left="isSwitchHistoryDisabledLeft"
+              :is-switch-history-disabled-right="isSwitchHistoryDisabledRight"
             ></tm-header>
           </el-col>
         </el-row>
@@ -420,6 +440,9 @@ function countHtyPointer(hisLen: number, type: HistoryPointerAction): void {
       text-align: center;
       line-height: 60px;
       font-size: 25px;
+      span:first-child {
+        margin-right: 10px;
+      }
     }
   }
 
@@ -436,5 +459,19 @@ function countHtyPointer(hisLen: number, type: HistoryPointerAction): void {
       margin: 0 auto;
     }
   }
+}
+
+/* ... 现有样式 ... */
+.highlight-value {
+  background-color: #fff3cd; /* 浅黄色背景 */
+  color: #856404; /* 深黄色文字 */
+  padding: 0 4px; /* 左右内边距 */
+  border-radius: 3px; /* 圆角边框 */
+  font-weight: bold; /* 加粗文字 */
+  border: 1px solid #ffeeba; /* 边框颜色 */
+}
+p {
+  // margin: 1em 0;
+  font-size: 24px;
 }
 </style>

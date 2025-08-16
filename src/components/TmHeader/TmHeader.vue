@@ -29,6 +29,8 @@ const props = defineProps<{
   segments: TimeIntervalObject[];
   configData: TomatoConfig;
   updateConfigData: (data: TomatoConfig) => void;
+  isSwitchHistoryDisabledLeft: boolean;
+  isSwitchHistoryDisabledRight: boolean;
 }>();
 
 defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
@@ -130,8 +132,8 @@ const copyTime = async () => {
 };
 </script>
 <template>
-  <el-row justify="center" align="middle">
-    <el-col :span="8" :xs="24">
+  <el-row justify="center" style="row-gap: 10px;" align="middle">
+    <el-col :span="9" :lg="9" :md="24" :sm="24"  :xs="24" class="col-center">
       <el-time-picker
         is-range
         range-separator="To"
@@ -142,7 +144,7 @@ const copyTime = async () => {
       />
     </el-col>
 
-    <el-col :span="10"  :xs="24">
+    <el-col :span="9" :lg="9" :md="24" :sm="24"   :xs="24" class="col-center">
       <el-button-group>
         <el-button type="warning" @click="$emit('merge-tomato')"
           >merge</el-button
@@ -156,13 +158,13 @@ const copyTime = async () => {
       </el-button-group>
     </el-col>
 
-    <el-col :span="4" :xs="24">
+    <el-col :span="6" :lg="6" :md="24" :sm="24"  :xs="24" class="col-center">
       <el-button-group>
-        <el-button type="primary" @click="$emit('switch-history','decrease')"
+        <el-button :disabled="isSwitchHistoryDisabledLeft" type="primary" @click="$emit('switch-history','decrease')"
           >
           <el-icon ><ArrowLeft /></el-icon>
         </el-button>
-        <el-button type="primary"  @click="$emit('switch-history','increase')">
+        <el-button :disabled="isSwitchHistoryDisabledRight" type="primary"  @click="$emit('switch-history','increase')">
           <el-icon><ArrowRight /></el-icon>
         </el-button>
       </el-button-group>
@@ -181,4 +183,11 @@ const copyTime = async () => {
   />
 </template>
 
-<style scoped></style>
+<style scoped>
+.col-center {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  align-items: center; /* 垂直居中 */
+  height: 100%; /* 确保垂直居中生效 */
+}
+</style>
