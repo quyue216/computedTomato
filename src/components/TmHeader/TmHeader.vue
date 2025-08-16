@@ -14,8 +14,8 @@ import {
   ElIcon,
 } from "element-plus";
 import TmHandleConfig from "../TmHandleConfig/TmHandleConfig.vue";
-import { ref, defineProps } from "vue";
-import store from "store";
+import { ref ,watch} from "vue";
+// import * as storeUtils from '@/utils/storeUtils'
 import dayjs from "dayjs";
 import type { TimeIntervalObject, TomatoConfig } from "tomato";
 
@@ -36,11 +36,17 @@ defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info","s
 //! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
 const timeInterVal = defineModel<[Date, Date]>();
 
+let oldTimeInterVal = timeInterVal.value;
 // 关闭配置对话框
-//! watch始终无法执行，不清楚原因暂时
-/* watch(timeInterVal, ()=>{
-  console.log("值显示了哈哈哈");
-}) */
+watch(timeInterVal, (newVal,oldVal)=>{
+  
+  if(oldTimeInterVal){
+    oldTimeInterVal = newVal;
+  }else{
+    oldTimeInterVal = oldVal;
+  }
+  
+})
 // 关闭对话框,
 const isClose = (state: TimeIntervalObject) => {
   if (state) return;
@@ -53,7 +59,7 @@ const isClose = (state: TimeIntervalObject) => {
 
   let minuteDiff = endTime.diff(startTime, "minute");
 
-  let { timeInfo } = store.get("CONFIG_OBJECT_CACHE");
+  // let { timeInfo } = storeUtils.getLocalStorage("CONFIG_OBJECT_CACHE");
 
   if (minuteDiff <= MIN_MINUTE) {
     //不合法,不去设置
@@ -63,7 +69,7 @@ const isClose = (state: TimeIntervalObject) => {
       duration: 3000,
     });
 
-    timeInterVal.value = timeInfo;
+    timeInterVal.value = oldTimeInterVal;
   } else {
     props.updateTimeInfo(timeInterVal.value);
   }
