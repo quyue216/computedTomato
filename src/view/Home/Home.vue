@@ -35,8 +35,6 @@ const baseTomatoConfig: BaseTomatoConfig = {
 
 type timeInfoType = typeof baseTomatoConfig.timeInfo;
 
-// 设置时间戳
-const startUnix = ref(dayjs().valueOf());
 // 保存生成的时间数据对象
 const saveSegments = ref<Array<TimeIntervalObject>>([]);
 // 选择的时间数据
@@ -58,15 +56,21 @@ enum HistoryPointerAction {
 const updateConfigData = (config: TomatoConfig) => {
   historyTimeInfo.value[pointerHistory.value].configData = config;
 
-  storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, `${pointerHistory.value}.configData`, config);
+  storeUtils.updateLocalStorageItem(
+    HISTORY_TIME_INFO,
+    `${pointerHistory.value}.configData`,
+    config
+  );
 };
 
 // 更新用户选择的时间
 const updateTimeInfo = (times: timeInfoType) => {
   // 当次选择发生变化
-  const isChange = historyTimeInfo.value[pointerHistory.value].timeInfo.every((item, i) => {
-    return times[i].toString() !== item.toString();
-  });
+  const isChange = historyTimeInfo.value[pointerHistory.value].timeInfo.every(
+    (item, i) => {
+      return times[i].toString() !== item.toString();
+    }
+  );
   // 清楚合并信息
   if (isChange) {
     //时间发生变化，segments需要重新计算
@@ -75,14 +79,12 @@ const updateTimeInfo = (times: timeInfoType) => {
   }
 
   historyTimeInfo.value[pointerHistory.value].timeInfo = times; //将会创建最新记录
-  // 重新计算时间区间
-  // computedSegments(historyTimeInfo.value[pointerHistory.value]);
+ 
 
   pushHistoryTimeInfo(times); // 将当前时间信息添加到历史记录中
 };
 // 1.有缓存读取缓存数据，无缓存生成最近两小时时间
 function selectInitTime(): void {
-  console.log("初始执行----2");
   // 没有缓存自动生成时间区间
   if (!storeUtils.getLocalStorage(HISTORY_TIME_INFO)) {
     const timeInfo = initTimeInfo();
@@ -113,7 +115,7 @@ function selectInitTime(): void {
 function computedSegments(config: BaseTomatoConfig): void {
   const { configData, timeInfo } = config;
   // 如果配置数据不合法，直接返回
-  
+
   const configDataCheckSuccess = Object.values(configData).every(
     (item) => item !== undefined
   );
@@ -125,11 +127,17 @@ function computedSegments(config: BaseTomatoConfig): void {
   }
 }
 
-watch([()=>historyTimeInfo.value[pointerHistory.value].timeInfo,()=>historyTimeInfo.value[pointerHistory.value].configData],()=>{
-  // if(newVal.timeInfo.toString() !== oldVal.timeInfo.toString()){
+watch(
+  [
+    () => historyTimeInfo.value[pointerHistory.value].timeInfo,
+    () => historyTimeInfo.value[pointerHistory.value].configData,
+  ],
+  () => {
+    // if(newVal.timeInfo.toString() !== oldVal.timeInfo.toString()){
     computedSegments(historyTimeInfo.value[pointerHistory.value]);
-  // }
-})
+    // }
+  }
+);
 
 // 表示当前系统的高亮
 onMounted(() => {
@@ -137,38 +145,43 @@ onMounted(() => {
   historyTimeInfo.value = storeUtils.getLocalStorage(HISTORY_TIME_INFO) || [];
 
   computedSegments(historyTimeInfo.value[pointerHistory.value]);
-
-  setInterval(() => {
-    // 当没有选择时间段的时候，高亮计算才开启
-    if (!selectedSegments.value.length) {
-      startUnix.value = dayjs().valueOf();
-    }
-  }, 3000);
+  // 监听时间变化
+  followTimeChangeDataState();
 });
 
 const saveNewSegments = computed(() => {
-  // if (selectedSegments.value.length === 0) {
-  saveSegments.value.forEach((item, index) => {
-    if (item.id < startUnix.value && item.endTime > startUnix.value) {
-      if (index > 0) {
-        //关闭掉上次的高亮，切换之后关闭掉上次的，只要大于0说明是又前面切换过来
-        saveSegments.value[index - 1].highlight = false;
-      }
-      item.highlight = true;
-    }
-  });
-  // }
-
-  if (historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo?.length&&saveSegments.value.length) {
+  if (
+    historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo?.length &&
+    saveSegments.value.length
+  ) {
     const copySelectSegments = saveSegments.value.slice(
       ...historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo
     );
-    
+
     return setMergeInfo(copySelectSegments, [...saveSegments.value]);
   }
 
   return saveSegments.value;
 });
+// 监听时间变化
+function followTimeChangeDataState() {
+  setInterval(() => {
+    // 当没有选择时间段的时候，高亮计算才开启
+    if (selectedSegments.value.length) return;
+
+    const timeStamp = dayjs().valueOf(); //时间戳
+
+    saveSegments.value.forEach((item, index) => {
+      if (item.id < timeStamp && item.endTime > timeStamp) {
+        if (index > 0) {
+          //关闭掉上次的高亮，切换之后关闭掉上次的，只要大于0说明是又前面切换过来
+          saveSegments.value[index - 1].highlight = false;
+        }
+        item.highlight = true;
+      }
+    });
+  }, 3000);
+}
 
 /*
  ---------合并番茄----------
@@ -203,20 +216,23 @@ const mergeTomato = () => {
   const firstSegment = sortedSegments[0];
   const lastSegment = sortedSegments[sortedSegments.length - 1];
 
-  const mergeInfo = historyTimeInfo.value[pointerHistory.value].configData.mergeInfo ?? [];
+  const mergeInfo =
+    historyTimeInfo.value[pointerHistory.value].configData.mergeInfo ?? [];
 
-  let newMergeInfo:Partial<towNumTuple> = [];
+  let newMergeInfo: Partial<towNumTuple> = [];
 
   if (mergeInfo.length === 0) {
-    newMergeInfo = [
-      firstSegment.index,
-      lastSegment.index + 1,
-    ];    
+    newMergeInfo = [firstSegment.index, lastSegment.index + 1];
   } else {
-    newMergeInfo [firstSegment.index, mergeInfo[1]] ;
+    newMergeInfo[(firstSegment.index, mergeInfo[1])];
   }
-  historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = newMergeInfo;
-  storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, `${pointerHistory.value}.configData.mergeInfo`, newMergeInfo);
+  historyTimeInfo.value[pointerHistory.value].configData.mergeInfo =
+    newMergeInfo;
+  storeUtils.updateLocalStorageItem(
+    HISTORY_TIME_INFO,
+    `${pointerHistory.value}.configData.mergeInfo`,
+    newMergeInfo
+  );
   // 清空选择
   selectedSegments.value = [];
   ElMessage.success("合并成功");
@@ -264,22 +280,24 @@ const setMergeInfo = (
 // 取消合并番茄
 const cancelMergeTomato = () => {
   historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = [];
-  
-  storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, `${pointerHistory.value}.configData.mergeInfo`, []);
-  
+
+  storeUtils.updateLocalStorageItem(
+    HISTORY_TIME_INFO,
+    `${pointerHistory.value}.configData.mergeInfo`,
+    []
+  );
+
   ElMessage.success("取消合并成功");
 };
 
 //----------历史记录---------
 function pushHistoryTimeInfo(times: [Date, Date]) {
-  
   // 读取本地缓存
   const bufferHis =
     (storeUtils.getLocalStorage(
       HISTORY_TIME_INFO
     ) as Array<BaseTomatoConfig>) ?? [];
-    
- 
+
   //判断是否存在
   const isExist = bufferHis.some(({ timeInfo }) => {
     return (
@@ -297,7 +315,11 @@ function pushHistoryTimeInfo(times: [Date, Date]) {
   countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
   // 限制历史记录的长度为10条
   // curHis才是原始的历史记录
-  const newHis = storeUtils.updateLocalStorageItem(HISTORY_TIME_INFO, historyTimeInfo.value.length.toString(), tempObj);
+  const newHis = storeUtils.updateLocalStorageItem(
+    HISTORY_TIME_INFO,
+    historyTimeInfo.value.length.toString(),
+    tempObj
+  );
 
   historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
 }
