@@ -31,6 +31,7 @@ const props = defineProps<{
   updateConfigData: (data: TomatoConfig) => void;
   isSwitchHistoryDisabledLeft: boolean;
   isSwitchHistoryDisabledRight: boolean;
+  disabledSwitchHistory: boolean;
 }>();
 
 defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
@@ -154,7 +155,7 @@ const copyTime = async () => {
         >
         <el-button type="primary" @click="copyTime">copy</el-button>
         <el-button @click="dialogVisible = true" type="info">setting</el-button>
-        <el-button type="danger" @click="$emit('clear-history-time-info')">clear</el-button>
+        <el-button type="danger" @click="$emit('clear-history-time-info')" :disabled="disabledSwitchHistory">clear</el-button>
       </el-button-group>
     </el-col>
 

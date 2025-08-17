@@ -106,6 +106,7 @@ function selectInitTime(): void {
       pushHistoryTimeInfo(timeInfo); //缓存起来
     } else {
       countHtyPointer(catchHistory.length, HistoryPointerAction.newest);
+      computedSegments(historyTimeInfo.value[pointerHistory.value]);
     }
   }
 }
@@ -130,6 +131,7 @@ watch(
   [
     () => historyTimeInfo?.value[pointerHistory.value]?.timeInfo,
     () => historyTimeInfo?.value[pointerHistory.value]?.configData,
+    ()=> historyTimeInfo.value[pointerHistory.value]
   ],
   () => {
     // if(newVal.timeInfo.toString() !== oldVal.timeInfo.toString()){
@@ -318,7 +320,6 @@ function pushHistoryTimeInfo(times: [Date, Date]):void {
   if(!bufferHis.length){ 
     historyTimeInfo.value = [tempObj]; //无缓存,在这完成初始化
     computedSegments(tempObj);//计算时间片段不依赖指针
-    return;
   }else{
     historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
   }
@@ -380,6 +381,10 @@ const isSwitchHistoryDisabledRight = computed(() => {
   return pointerHistory.value === historyTimeInfo.value.length - 1;
 });
 
+const disabledSwitchHistory = computed(() => {
+  return historyTimeInfo.value.length <= 1;
+});
+
 </script>
 <template>
   <div class="common-layout">
@@ -406,6 +411,7 @@ const isSwitchHistoryDisabledRight = computed(() => {
               @switch-history="switchHistory"
               :is-switch-history-disabled-left="isSwitchHistoryDisabledLeft"
               :is-switch-history-disabled-right="isSwitchHistoryDisabledRight"
+              :disabled-switch-history="disabledSwitchHistory"
             ></tm-header>
           </el-col>
         </el-row>

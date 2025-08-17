@@ -17,7 +17,7 @@
         prop="timeBucket"
         label="时间段"
         align="center"
-        width="180"
+        width="150"
       >
       </el-table-column>
 
