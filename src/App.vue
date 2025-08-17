@@ -7,7 +7,7 @@ function isMobile() {
   return ('ontouchstart' in document.documentElement); 
 }
 
-const isMobileEnv = ref(isMobile());
+const isMobileEnv = ref(false);
 
 </script>
 
