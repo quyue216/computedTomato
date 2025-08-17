@@ -156,6 +156,7 @@ const timeInfoToNow = ()=>{
           >merge</el-button
         >
         <el-button type="info" @click="$emit('cancel-merge-tomato')"
+          :disabled="configData.mergeInfo.length === 0"
           >cancel Merge</el-button
         >
         <el-button type="success" @click="copyTime">copy</el-button>
