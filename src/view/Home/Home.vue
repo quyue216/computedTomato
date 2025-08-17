@@ -384,7 +384,6 @@ const isSwitchHistoryDisabledRight = computed(() => {
 const disabledSwitchHistory = computed(() => {
   return historyTimeInfo.value.length <= 1;
 });
-
 </script>
 <template>
   <div class="common-layout">
@@ -453,12 +452,12 @@ const disabledSwitchHistory = computed(() => {
     height: 100% - 50px;
 
     .tm-header-bg {
-      width: 60%;
+      width: 65%;
       margin: 0 auto;
     }
 
     .tm-main-head-bg {
-      width: 60%;
+      width: 65%;
       margin: 0 auto;
     }
   }
