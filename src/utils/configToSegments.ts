@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import type { TomatoConfig, TimeIntervalObject } from "tomato";
 
 export default function configToSegments(configData: TomatoConfig,
   timesInfo: [Date, Date]) {

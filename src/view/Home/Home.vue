@@ -43,6 +43,33 @@ const selectedSegments = ref<Array<TimeIntervalObject>>([]);
 const historyTimeInfo = ref<Array<BaseTomatoConfig>>([]);
 // 默认指向顶层
 let pointerHistory = ref(0);
+// 番茄配置访问器,提高可读性,避免a.b.c过长
+const tomatoConfigAccessor = {
+  get config() {
+    return historyTimeInfo.value[pointerHistory.value];
+  },
+  set config(val) {
+    historyTimeInfo.value[pointerHistory.value] = val;
+  },
+  get timeInfo() {
+    return historyTimeInfo.value[pointerHistory.value].timeInfo;
+  },
+  set timeInfo(val) {
+    historyTimeInfo.value[pointerHistory.value].timeInfo = val;
+  },
+  get mergeInfo() {
+    return historyTimeInfo.value[pointerHistory.value].configData.mergeInfo;
+  },
+  set mergeInfo(val) {
+    historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = val;
+  },
+  get configData() {
+    return historyTimeInfo.value[pointerHistory.value].configData;
+  },
+  set configData(val) {
+    historyTimeInfo.value[pointerHistory.value].configData = val;
+  },
+};
 
 selectInitTime();
 // 定义一个枚举类型来表示历史记录指针的操作
@@ -54,7 +81,7 @@ enum HistoryPointerAction {
 }
 
 const updateConfigData = (config: TomatoConfig) => {
-  historyTimeInfo.value[pointerHistory.value].configData = config;
+  tomatoConfigAccessor.configData = config;
 
   storeUtils.updateLocalStorageItem(
     HISTORY_TIME_INFO,
@@ -106,7 +133,7 @@ function selectInitTime(): void {
       pushHistoryTimeInfo(timeInfo); //缓存起来
     } else {
       countHtyPointer(catchHistory.length, HistoryPointerAction.newest);
-      computedSegments(historyTimeInfo.value[pointerHistory.value]);
+      computedSegments(tomatoConfigAccessor.config); // 计算时间区间
     }
   }
 }
@@ -148,11 +175,11 @@ onMounted(() => {
 
 const saveNewSegments = computed(() => {
   if (
-    historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo?.length &&
+    tomatoConfigAccessor.mergeInfo?.length &&
     saveSegments.value.length
   ) {
     const copySelectSegments = saveSegments.value.slice(
-      ...historyTimeInfo.value[pointerHistory.value].configData?.mergeInfo
+      ...tomatoConfigAccessor.mergeInfo
     );
 
     return setMergeInfo(copySelectSegments, [...saveSegments.value]);
@@ -210,21 +237,22 @@ const mergeTomato = () => {
   }
 
   // 执行合并逻辑
-  const firstSegment = sortedSegments[0];
-  const lastSegment = sortedSegments[sortedSegments.length - 1];
+  const firstSegment = sortedSegments.shift()!;
+  const lastSegment = sortedSegments.pop()!;
 
-  const mergeInfo =
-    historyTimeInfo.value[pointerHistory.value].configData.mergeInfo ?? [];
+  const mergeInfo = tomatoConfigAccessor.mergeInfo ?? [];
 
   let newMergeInfo: Partial<towNumTuple> = [];
 
   if (mergeInfo.length === 0) {
+    // lastSegment.index +1 方便后面slice
     newMergeInfo = [firstSegment.index, lastSegment.index + 1];
   } else {
     newMergeInfo=[firstSegment.index, mergeInfo[1]];
   }
-  historyTimeInfo.value[pointerHistory.value].configData.mergeInfo =
-    newMergeInfo as [number,number];
+
+  tomatoConfigAccessor.mergeInfo = newMergeInfo as [number,number];
+
   storeUtils.updateLocalStorageItem(
     HISTORY_TIME_INFO,
     `${pointerHistory.value}.configData.mergeInfo`,
@@ -258,6 +286,7 @@ const setMergeInfo = (
     firstSegment.timeBucket.split(" - ")[0] +
     " - " +
     lastSegment.timeBucket.split(" - ")[1];
+
   // 重新计算时间
   mergedSegment.timeInterval = sortedSegments.reduce(
     (pre, cur) => pre + cur.timeInterval,
@@ -276,7 +305,7 @@ const setMergeInfo = (
 
 // 取消合并番茄
 const cancelMergeTomato = () => {
-  historyTimeInfo.value[pointerHistory.value].configData.mergeInfo = [];
+  tomatoConfigAccessor.mergeInfo = [];
 
   storeUtils.updateLocalStorageItem(
     HISTORY_TIME_INFO,
@@ -309,7 +338,6 @@ function pushHistoryTimeInfo(times: [Date, Date]):void {
 
   tempObj.timeInfo = times;
 
-  // 限制历史记录的长度为10条
   // curHis才是原始的历史记录
   const newHis = storeUtils.updateLocalStorageItem(
     HISTORY_TIME_INFO,
