@@ -15,16 +15,13 @@ import {
 } from "element-plus";
 import TmHandleConfig from "../TmHandleConfig/TmHandleConfig.vue";
 import { ref ,watch} from "vue";
-// import * as storeUtils from '@/utils/storeUtils'
 import dayjs from "dayjs";
-import type { TimeIntervalObject, TomatoConfig } from "tomato";
 
 const dialogVisible = ref(false);
 
 const MIN_MINUTE = 30;
 
 const props = defineProps<{
-  // timeInfo: [Date, Date];
   updateTimeInfo: (times: [Date, Date]) => void;
   segments: TimeIntervalObject[];
   configData: TomatoConfig;
@@ -36,7 +33,6 @@ const props = defineProps<{
 
 defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
 
-//! 这块代码居然是动态的初始化,并没有把值传递过去，当时初始化时值为undefined。后续居然能够显示最新的Props
 const timeInterVal = defineModel<[Date, Date]>();
 
 let oldTimeInterVal = timeInterVal.value;
@@ -80,6 +76,7 @@ const isClose = (state: TimeIntervalObject) => {
 
 // 复制函数
 const copyTime = async () => {
+  // 收集当前选中时间
   let text = timeInterVal.value!.reduce((pre: string[], item: Date) => {
     pre.push(dayjs(item).format("MM-DD HH:mm"));
     return pre;
@@ -99,6 +96,7 @@ const copyTime = async () => {
 
     const workTm = tmData.filter((item) => item.type);
 
+    // 收集当前segments 数量 {30:1}, timeInterVal相同视为同一个类型
     workTm.forEach((item) => {
       const curCount = tempObj[item.timeInterval] || 0;
       tempObj[item.timeInterval] = curCount + 1;
@@ -112,7 +110,7 @@ const copyTime = async () => {
         tomatoCount: value + "",
       });
     });
-
+    // 排序
     return tempArr
       .sort((a, b) => {
         return Number(b.tomatoCount) - Number(a.tomatoCount);

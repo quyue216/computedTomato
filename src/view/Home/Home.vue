@@ -12,10 +12,10 @@ import {
 import TmDataToTable from "@/components/TmDataToTable/TmDataToTable.vue";
 import TmInfoCollect from "@/components/TmInfoCollect/TmInfoCollect.vue";
 import dayjs from "dayjs";
-import { ref, watch, onMounted, computed, watchEffect } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
 import configToSegments from "@/utils/configToSegments";
 import { initTimeInfo } from "@/utils/tools";
-import type { TomatoConfig, TimeIntervalObject } from "tomato";
+// import type { TomatoConfig, TimeIntervalObject } from "tomato";
 import { cloneDeep } from "lodash";
 import * as storeUtils from "@/utils/storeUtils";
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
@@ -221,10 +221,10 @@ const mergeTomato = () => {
   if (mergeInfo.length === 0) {
     newMergeInfo = [firstSegment.index, lastSegment.index + 1];
   } else {
-    newMergeInfo[(firstSegment.index, mergeInfo[1])];
+    newMergeInfo=[firstSegment.index, mergeInfo[1]];
   }
   historyTimeInfo.value[pointerHistory.value].configData.mergeInfo =
-    newMergeInfo;
+    newMergeInfo as [number,number];
   storeUtils.updateLocalStorageItem(
     HISTORY_TIME_INFO,
     `${pointerHistory.value}.configData.mergeInfo`,

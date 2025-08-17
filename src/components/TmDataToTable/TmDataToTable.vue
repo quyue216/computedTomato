@@ -46,7 +46,6 @@
 </template>
 
 <script setup lang="ts">
-import type { TimeIntervalObject } from "tomato";
 import type { TableInstance } from "element-plus";
 import { ElTable, ElTableColumn } from "element-plus";
 import { ref } from "vue";

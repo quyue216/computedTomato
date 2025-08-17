@@ -1,16 +1,17 @@
-declare module "tomato" {
+// declare module "tomato" {
    
-    export type TomatoConfig = {
+     type TomatoConfig = {
         tomatoTimeSize: number,
         restTimeSize: number,  //小休息
         bigRestTimeSize: number,//大休息时间
         happenBigSegment: number //间隔时间
+        mergeInfo: number[]
     }
 
-    export interface TimeIntervalObject {
+     interface TimeIntervalObject {
         timeBucket: string;
-        timeInterval: number;
-        id: number;
+        timeInterval: number; //番茄大小 30
+        id: number; //开始时间
         type: boolean;
         count: number;
         endTime: number;
@@ -19,14 +20,14 @@ declare module "tomato" {
         // merged?: [number,number];
     }
 
-    export interface Segments {
+     interface Segments {
         segments: TimeIntervalObject[]
     }
 
-    export type TimePickerType = Date | [Date, Date] | [number, number] | [string, string] | []
+     type TimePickerType = Date | [Date, Date] | [number, number] | [string, string] | []
 
 
-}
+// }
 
 
 declare module "store"{
@@ -47,4 +48,5 @@ type BaseTomatoConfig = {
     configData: TomatoConfig;
     timeInfo:Tuple2<Date>;
     onlyShowTm: boolean;
+
 }

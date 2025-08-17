@@ -65,7 +65,6 @@
   */
   import { computed, defineProps } from "vue";
   import { ElEmpty } from "element-plus";
-  import type {TimeIntervalObject} from "tomato"
 //  基于运行时推断
     const props = withDefaults(defineProps<{
         segments:TimeIntervalObject[]
@@ -112,7 +111,6 @@
   存在高亮效果
   */
     const curTomNum = computed(() => {
-    
       const result = props.segments.find((item) => item.highlight);  
       return result;
     });
@@ -120,7 +118,7 @@
     // 剩余番茄分支统计信息
     const remainingTimeInfo = computed(() => {
 
-      let index = props.segments.indexOf(curTomNum.value);
+      let index = props.segments.indexOf(curTomNum.value!);
 
       
       const timeInfo = props.segments.slice(index + 1);
@@ -129,7 +127,7 @@
     });
     
     const remainTimeRestNum = computed(() => {
-      let index = props.segments.indexOf(curTomNum.value);
+      let index = props.segments.indexOf(curTomNum.value!);
     
       let data = props.segments.slice(index + 1);
     
