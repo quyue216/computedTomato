@@ -16,7 +16,7 @@ import {
 import TmHandleConfig from "../TmHandleConfig/TmHandleConfig.vue";
 import { ref ,watch} from "vue";
 import dayjs from "dayjs";
-
+import { initTimeInfo } from '@/utils/tools'
 const dialogVisible = ref(false);
 
 const MIN_MINUTE = 30;
@@ -129,6 +129,13 @@ const copyTime = async () => {
     duration: 3000,
   });
 };
+// 时间设置为当前时间
+const timeInfoToNow = ()=>{
+  const timeInfo = initTimeInfo();
+  timeInterVal.value = timeInfo;
+  props.updateTimeInfo(timeInfo);
+  ElMessage.success('时间设置为当前时间')
+}
 </script>
 <template>
   <el-row justify="center" style="row-gap: 10px;" align="middle">
@@ -145,15 +152,16 @@ const copyTime = async () => {
 
     <el-col :span="9" :lg="9" :md="24" :sm="24"   :xs="24" class="col-center">
       <el-button-group>
-        <el-button type="warning" @click="$emit('merge-tomato')"
+        <el-button type="primary" @click="$emit('merge-tomato')"
           >merge</el-button
         >
-        <el-button  type="warning" @click="$emit('cancel-merge-tomato')"
+        <el-button type="info" @click="$emit('cancel-merge-tomato')"
           >cancel Merge</el-button
         >
-        <el-button type="primary" @click="copyTime">copy</el-button>
-        <el-button @click="dialogVisible = true" type="info">setting</el-button>
+        <el-button type="success" @click="copyTime">copy</el-button>
+        <el-button type="default" @click="dialogVisible = true">setting</el-button>
         <el-button type="danger" @click="$emit('clear-history-time-info')" :disabled="disabledSwitchHistory">clear</el-button>
+        <el-button type="warning" @click="timeInfoToNow">now</el-button>
       </el-button-group>
     </el-col>
 

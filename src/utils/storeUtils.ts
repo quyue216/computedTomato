@@ -48,8 +48,6 @@ export function updateLocalStorageItem(key: string, path: string, newValue: any)
     if (!key || !path) {
         return
     }
-   console.log('updateLocalStorageItem', key, path, newValue);
-
    
     const keys = path.split('.');
 
@@ -78,7 +76,7 @@ export function updateLocalStorageItem(key: string, path: string, newValue: any)
 /**
  * 获取本地存储值内部的某个键
  * @param key 键
- * @param innerKey 内部键
+ * @param innerKey 内部键 "a.b.c"
  * @returns 存储的值
  */
 
@@ -106,6 +104,7 @@ function getValueByPath<T = any>(obj: Record<string, any>, path: string, default
 
     // 将路径分割为键数组
     const keys = path.split('.');
+
     let result: any = obj;
 
     for (const key of keys) {
