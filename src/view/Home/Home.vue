@@ -148,9 +148,10 @@ function computedSegments(config: BaseTomatoConfig): void {
   );
 
   if (configDataCheckSuccess && timeInfo.length) {
-    saveSegments.value = configToSegments(configData, timeInfo as Tuple2<Date>).map(
-      (item, i) => ({ ...item, index: i })
-    );
+    saveSegments.value = configToSegments(
+      configData,
+      timeInfo as Tuple2<Date>
+    ).map((item, i) => ({ ...item, index: i }));
   }
 }
 
@@ -158,7 +159,7 @@ watch(
   [
     () => historyTimeInfo?.value[pointerHistory.value]?.timeInfo,
     () => historyTimeInfo?.value[pointerHistory.value]?.configData,
-    ()=> historyTimeInfo.value[pointerHistory.value]
+    () => historyTimeInfo.value[pointerHistory.value],
   ],
   () => {
     // if(newVal.timeInfo.toString() !== oldVal.timeInfo.toString()){
@@ -168,16 +169,12 @@ watch(
 
 // 表示当前系统的高亮
 onMounted(() => {
-
   // 监听时间变化
   followTimeChangeDataState();
 });
 
 const saveNewSegments = computed(() => {
-  if (
-    tomatoConfigAccessor.mergeInfo?.length &&
-    saveSegments.value.length
-  ) {
+  if (tomatoConfigAccessor.mergeInfo?.length && saveSegments.value.length) {
     const copySelectSegments = saveSegments.value.slice(
       ...tomatoConfigAccessor.mergeInfo
     );
@@ -248,10 +245,10 @@ const mergeTomato = () => {
     // lastSegment.index +1 方便后面slice
     newMergeInfo = [firstSegment.index, lastSegment.index + 1];
   } else {
-    newMergeInfo=[firstSegment.index, mergeInfo[1]];
+    newMergeInfo = [firstSegment.index, mergeInfo[1]];
   }
 
-  tomatoConfigAccessor.mergeInfo = newMergeInfo as [number,number];
+  tomatoConfigAccessor.mergeInfo = newMergeInfo as [number, number];
 
   storeUtils.updateLocalStorageItem(
     HISTORY_TIME_INFO,
@@ -338,17 +335,18 @@ function pushHistoryTimeInfo(times: [Date, Date]):void {
 
   tempObj.timeInfo = times;
 
-  // curHis才是原始的历史记录
-  const newHis = storeUtils.updateLocalStorageItem(
-    HISTORY_TIME_INFO,
-    historyTimeInfo.value.length.toString(),
-    tempObj
-  );
-
-  if(!bufferHis.length){ 
+  if (!bufferHis.length) {
     historyTimeInfo.value = [tempObj]; //无缓存,在这完成初始化
-    computedSegments(tempObj);//计算时间片段不依赖指针
-  }else{
+    computedSegments(tempObj); //计算时间片段不依赖指针
+    storeUtils.setLocalStorage(HISTORY_TIME_INFO, [tempObj]);
+  } else {
+    // curHis才是原始的历史记录
+    const newHis = storeUtils.updateLocalStorageItem(
+      HISTORY_TIME_INFO,
+      historyTimeInfo.value.length.toString(),
+      tempObj
+    );
+
     historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
   }
   countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
