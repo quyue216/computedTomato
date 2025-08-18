@@ -8,6 +8,8 @@ import {
   ElTabs,
   ElTabPane,
   ElMessage,
+  ElSelect,
+  ElOption,
 } from "element-plus";
 import TmDataToTable from "@/components/TmDataToTable/TmDataToTable.vue";
 import TmInfoCollect from "@/components/TmInfoCollect/TmInfoCollect.vue";
@@ -314,7 +316,7 @@ const cancelMergeTomato = () => {
 };
 
 //----------历史记录---------
-function pushHistoryTimeInfo(times: [Date, Date]):void {
+function pushHistoryTimeInfo(times: [Date, Date]): void {
   // 读取本地缓存
   const bufferHis =
     (storeUtils.getLocalStorage(
@@ -410,14 +412,62 @@ const isSwitchHistoryDisabledRight = computed(() => {
 const disabledSwitchHistory = computed(() => {
   return historyTimeInfo.value.length <= 1;
 });
+//---------------收藏----------------
+const value = ref('')
+
+const options = [
+  {
+    value: 'Option1',
+    label: 'Option1',
+  },
+  {
+    value: 'Option2',
+    label: 'Option2',
+  },
+  {
+    value: 'Option3',
+    label: 'Option3',
+  },
+  {
+    value: 'Option4',
+    label: 'Option4',
+  },
+  {
+    value: 'Option5',
+    label: 'Option5',
+  },
+]
 </script>
 <template>
   <div class="common-layout">
     <el-container>
-      <el-header height="50px">
+      <el-header
+        height="50px"
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          column-gap: 20px;
+        "
+      >
         <p>
-          历史记录共<span class="highlight-value">{{historyTimeInfo.length}}</span>条，历史记录指针<span class="highlight-value">{{pointerHistory+1}}</span>
+          历史记录共<span class="highlight-value">{{
+            historyTimeInfo.length
+          }}</span
+          >条，历史记录指针<span class="highlight-value">{{
+            pointerHistory + 1
+          }}</span>
         </p>
+        <!-- <el-form-item label="收藏" style="margin-bottom: 0"> -->
+          <el-select  v-model="value" placeholder="选择常用时间段" style="width: 240px">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        <!-- </el-form-item> -->
       </el-header>
       <el-main class="tm-main">
         <!-- 这里感觉冗余了 -->
