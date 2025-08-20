@@ -24,3 +24,14 @@ export const initTimeInfo = () => {
      return [startTime,endTime] as [Date,Date];
 };
 
+export function formatTimeRange(
+  timeList: (string | Date)[],
+  separator: string = ' - '
+): string {
+  if (!Array.isArray(timeList) || timeList.length === 0) {
+    return '';
+  }
+  return timeList
+    .map(time => dayjs(time).format('HH:mm'))
+    .join(separator);
+}

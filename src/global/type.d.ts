@@ -43,10 +43,15 @@ declare module "store"{
     const store: Store;
     export default store;
 }
+// 唯一id类型
+type  cryptoUUID = ReturnType<typeof crypto.randomUUID>
+
 // 基础的番茄配置
 type BaseTomatoConfig = {
     configData: TomatoConfig;
     timeInfo:Tuple2<Date>;
     onlyShowTm: boolean;
-
+    uuid:cryptoUUID;
+    work?:boolean; //标识为工作时间
 }
+

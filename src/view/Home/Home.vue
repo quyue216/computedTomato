@@ -8,14 +8,16 @@ import {
   ElTabs,
   ElTabPane,
   ElMessage,
+  ElSelect,
+  ElOption,
+  ElMessageBox,
 } from "element-plus";
 import TmDataToTable from "@/components/TmDataToTable/TmDataToTable.vue";
 import TmInfoCollect from "@/components/TmInfoCollect/TmInfoCollect.vue";
 import dayjs from "dayjs";
 import { ref, watch, onMounted, computed } from "vue";
 import configToSegments from "@/utils/configToSegments";
-import { initTimeInfo } from "@/utils/tools";
-// import type { TomatoConfig, TimeIntervalObject } from "tomato";
+import { initTimeInfo ,formatTimeRange} from "@/utils/tools";
 import { cloneDeep } from "lodash";
 import * as storeUtils from "@/utils/storeUtils";
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
@@ -31,6 +33,7 @@ const baseTomatoConfig: BaseTomatoConfig = {
   },
   timeInfo: initTimeInfo(),
   onlyShowTm: false,
+  uuid: crypto.randomUUID(),
 };
 
 type timeInfoType = typeof baseTomatoConfig.timeInfo;
@@ -78,6 +81,7 @@ enum HistoryPointerAction {
   decrease = "decrease",
   rest = "rest",
   newest = "newest",
+  goto = "goto"
 }
 
 const updateConfigData = (config: TomatoConfig) => {
@@ -127,6 +131,7 @@ function selectInitTime(): void {
 
     const currentTime = dayjs().valueOf();
     // 当前时间大于缓存的截止时间。那么使用默认时间
+    //! 这里的逻辑重新改动,不比较天,比较小时
     if (currentTime >= dayjs(topHis.timeInfo[1]).valueOf()) {
       const timeInfo = initTimeInfo();
 
@@ -314,7 +319,7 @@ const cancelMergeTomato = () => {
 };
 
 //----------历史记录---------
-function pushHistoryTimeInfo(times: [Date, Date]):void {
+function pushHistoryTimeInfo(times: [Date, Date]): void {
   // 读取本地缓存
   const bufferHis =
     (storeUtils.getLocalStorage(
@@ -322,10 +327,11 @@ function pushHistoryTimeInfo(times: [Date, Date]):void {
     ) as Array<BaseTomatoConfig>) ?? [];
 
   //判断是否存在
-  const isExist = bufferHis.some(({ timeInfo }) => {
+  const isExist = bufferHis.some(({ timeInfo, uuid }) => {
     return (
-      dayjs(times[0]).valueOf() === dayjs(timeInfo[0]).valueOf() &&
-      dayjs(times[1]).valueOf() === dayjs(timeInfo[1]).valueOf()
+      (dayjs(times[0]).valueOf() === dayjs(timeInfo[0]).valueOf() &&
+        dayjs(times[1]).valueOf() === dayjs(timeInfo[1]).valueOf()) ||
+      baseTomatoConfig.uuid === uuid
     );
   });
 
@@ -334,6 +340,7 @@ function pushHistoryTimeInfo(times: [Date, Date]):void {
   let tempObj = cloneDeep(baseTomatoConfig);
 
   tempObj.timeInfo = times;
+  tempObj.uuid = crypto.randomUUID(); //添加唯一id
 
   if (!bufferHis.length) {
     historyTimeInfo.value = [tempObj]; //无缓存,在这完成初始化
@@ -379,8 +386,8 @@ const switchHistory = (type: HistoryPointerAction) => {
   ElMessage.success("切换历史记录成功");
 };
 
-// 重新计算历史记录
-function countHtyPointer(hisLen: number, type: HistoryPointerAction): void {
+//HACK  代码需要重构 hisLen冗余
+function countHtyPointer(hisLen: number, type: HistoryPointerAction,val?:number): void {
   if (type === "increase") {
     pointerHistory.value++;
     if (hisLen <= pointerHistory.value) {
@@ -395,6 +402,8 @@ function countHtyPointer(hisLen: number, type: HistoryPointerAction): void {
     pointerHistory.value = 0;
   } else if (type === "newest") {
     pointerHistory.value = hisLen - 1;
+  }else if(type === HistoryPointerAction.goto){
+    pointerHistory.value = val!;
   }
 }
 //切换历史记录禁用
@@ -410,14 +419,139 @@ const isSwitchHistoryDisabledRight = computed(() => {
 const disabledSwitchHistory = computed(() => {
   return historyTimeInfo.value.length <= 1;
 });
+//---------------常用工作时间----------------
+
+// 工作时间
+const DAILY_WORK_TIME = "dailyWorkTime";
+
+const dailyWorkTime = ref<Array<BaseTomatoConfig & {remark?:string}>>([]);
+
+
+const dailyWorkRecords = computed(() => {
+  return dailyWorkTime.value.map((item) => ({
+    ...item,
+    label: item.timeInfo.map((item) => dayjs(item).format("HH:mm")).join(" - "),
+  }));
+});
+
+const selectedDailyWorkTime = ref<cryptoUUID | "">("");
+
+// 增加时间段
+const  workTimeManager = {
+  async addWorkTime() {
+    // 判断当前时间是否存在于常用工作时间中
+    const isExist = dailyWorkTime.value.find(
+      (item) => item.uuid === tomatoConfigAccessor.config.uuid
+    );
+  
+    if (isExist) return ElMessage.warning("常用时间段已存在");
+    
+    try {
+      const res = await ElMessageBox.prompt("请输入时间段名称", "提示", {
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
+        inputValue: formatTimeRange(tomatoConfigAccessor.config.timeInfo),
+        inputValidator: (val: string) => {
+          if (!val) {
+            return "请输入时间段名称";
+          }
+          return true;
+        },
+      })
+      
+      const { value } = res;
+      
+      if (value) {
+        const tempObj = cloneDeep(tomatoConfigAccessor.config) as BaseTomatoConfig & {remark?:string};
+        tempObj.remark = value; //备注添加
+        dailyWorkTime.value.push(tempObj);
+      }
+      
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  _syncDWtToHistory(item:BaseTomatoConfig & {remark?:string}):void { //同步到历史记录中
+    /* 
+    1. 多选框数据来源于缓存或者历史记录
+    */
+   const index =  historyTimeInfo.value.findIndex((item) => item.uuid === item.uuid);
+    
+   if(index !== -1){ // 存在无需做任何处理
+    
+    countHtyPointer(historyTimeInfo.value.length,HistoryPointerAction.goto,index);
+    return;
+   }
+   
+    //不存在 数据来源于缓存
+    pushHistoryTimeInfo(item.timeInfo);
+  },
+  init() {
+    // 初始化常用工作时间
+    dailyWorkTime.value = this.localStorageDailyWorkTime;
+    // 监听常用工作时间变化
+    watch(
+      () => dailyWorkTime.value.length,
+      () => {
+        storeUtils.setLocalStorage(DAILY_WORK_TIME, dailyWorkTime.value);
+      }
+    );
+  },
+  selectDailyWorkTime:(val:cryptoUUID | "")=> {
+    
+    if(val){
+      const item = dailyWorkTime.value.find((item) => item.uuid === val);
+      
+      item&&workTimeManager._syncDWtToHistory(item);
+    }
+  },
+  get localStorageDailyWorkTime() {
+    return (dailyWorkTime.value =
+      (storeUtils.getLocalStorage(
+        DAILY_WORK_TIME
+      ) as Array<BaseTomatoConfig>) ?? []);
+  },
+};
+workTimeManager.init(); //初始化
+/* 
+常用的工作时间已经在history中,
+1. 调整pointerHistory的指针
+2. 未在history中,添加到history中
+*/
 </script>
 <template>
   <div class="common-layout">
     <el-container>
-      <el-header height="80px">
+      <el-header
+        height="80px"
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          column-gap: 20px;
+        "
+      >
         <p>
-          历史记录共<span class="highlight-value">{{historyTimeInfo.length}}</span>条，历史记录指针<span class="highlight-value">{{pointerHistory+1}}</span>
+          历史记录共<span class="highlight-value">{{
+            historyTimeInfo.length
+          }}</span
+          >条，历史记录指针<span class="highlight-value">{{
+            pointerHistory + 1
+          }}</span>
         </p>
+        <el-select
+          v-model="selectedDailyWorkTime"
+          placeholder="选择常用时间段"
+          style="width: 200px"
+          @change="workTimeManager.selectDailyWorkTime"
+        >
+          <el-option
+            v-for="item in dailyWorkRecords"
+            :key="item.uuid"
+            :label="item.remark ?? item.label"
+            :value="item.uuid"
+          />
+        </el-select>
       </el-header>
       <el-main class="tm-main">
         <!-- 这里感觉冗余了 -->
@@ -437,6 +571,7 @@ const disabledSwitchHistory = computed(() => {
               :is-switch-history-disabled-left="isSwitchHistoryDisabledLeft"
               :is-switch-history-disabled-right="isSwitchHistoryDisabledRight"
               :disabled-switch-history="disabledSwitchHistory"
+              @addWorkTime="workTimeManager.addWorkTime"
             ></tm-header>
           </el-col>
         </el-row>

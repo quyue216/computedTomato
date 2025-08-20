@@ -31,7 +31,7 @@ const props = defineProps<{
   disabledSwitchHistory: boolean;
 }>();
 
-defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
+defineEmits(["add-work-time","merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
 
 const timeInterVal = defineModel<[Date, Date]>();
 
@@ -150,23 +150,24 @@ const timeInfoToNow = ()=>{
       />
     </el-col>
 
-    <el-col :span="9" :lg="9" :md="24" :sm="24"   :xs="24" class="col-center">
+    <el-col :span="11" :lg="11" :md="24" :sm="24"   :xs="24" class="col-center">
       <el-button-group>
-        <el-button type="primary" @click="$emit('merge-tomato')"
+               <el-button type="primary" @click="$emit('merge-tomato')"
           >merge</el-button
         >
-        <el-button type="info" @click="$emit('cancel-merge-tomato')"
+        <el-button type="success" @click="copyTime">copy</el-button>
+        <el-button type="info"  @click="$emit('add-work-time')" icon="DocumentAdd"></el-button>
+        <el-button type="warning" @click="timeInfoToNow">now</el-button>
+        <el-button type="default" @click="$emit('cancel-merge-tomato')"
           :disabled="configData.mergeInfo.length === 0"
           >cancel Merge</el-button
         >
-        <el-button type="success" @click="copyTime">copy</el-button>
         <el-button type="default" @click="dialogVisible = true">setting</el-button>
         <el-button type="danger" @click="$emit('clear-history-time-info')" :disabled="disabledSwitchHistory">clear</el-button>
-        <el-button type="warning" @click="timeInfoToNow">now</el-button>
       </el-button-group>
     </el-col>
 
-    <el-col :span="6" :lg="6" :md="24" :sm="24"  :xs="24" class="col-center">
+    <el-col :span="4" :lg="4" :md="24" :sm="24"  :xs="24" class="col-center">
       <el-button-group>
         <el-button :disabled="isSwitchHistoryDisabledLeft" type="primary" @click="$emit('switch-history','decrease')"
           >
