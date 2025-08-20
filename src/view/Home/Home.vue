@@ -361,9 +361,8 @@ function pushHistoryTimeInfo(times: [Date, Date]): void {
 
 // 清空历史记录
 const clearHistoryTimeInfo = () => {
-  const lastHisItem = historyTimeInfo.value.pop();
   //保留最新一条记录
-  historyTimeInfo.value = lastHisItem ? [lastHisItem] : []; // 清空历史记录
+  historyTimeInfo.value = [tomatoConfigAccessor.config]; // 清空历史记录
 
   storeUtils.setLocalStorage(HISTORY_TIME_INFO, historyTimeInfo.value);
 
@@ -426,6 +425,7 @@ const DAILY_WORK_TIME = "dailyWorkTime";
 
 const dailyWorkTime = ref<Array<BaseTomatoConfig & {remark?:string}>>([]);
 
+console.log(dailyWorkTime,"常用时间段对象，当你需要操作常用时间段元素请操作它");
 
 const dailyWorkRecords = computed(() => {
   return dailyWorkTime.value.map((item) => ({
@@ -471,20 +471,30 @@ const  workTimeManager = {
       console.log(error);
     }
   },
-  _syncDWtToHistory(item:BaseTomatoConfig & {remark?:string}):void { //同步到历史记录中
+  _syncDWtToHistory(val:BaseTomatoConfig & {remark?:string}):void { //同步到历史记录中
     /* 
     1. 多选框数据来源于缓存或者历史记录
     */
-   const index =  historyTimeInfo.value.findIndex((item) => item.uuid === item.uuid);
+   const index =  historyTimeInfo.value.findIndex((item) => item.uuid === val.uuid);
     
    if(index !== -1){ // 存在无需做任何处理
     
     countHtyPointer(historyTimeInfo.value.length,HistoryPointerAction.goto,index);
     return;
    }
-   
+  // 有可能history中已经存在工作时间段 (这种情况无需在考虑)
+   const tempObj = val;
+
     //不存在 数据来源于缓存
-    pushHistoryTimeInfo(item.timeInfo);
+     const newHis = storeUtils.updateLocalStorageItem(
+      HISTORY_TIME_INFO,
+      historyTimeInfo.value.length.toString(),
+      tempObj
+    );
+
+    historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
+  
+    countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
   },
   init() {
     // 初始化常用工作时间
@@ -496,6 +506,15 @@ const  workTimeManager = {
         storeUtils.setLocalStorage(DAILY_WORK_TIME, dailyWorkTime.value);
       }
     );
+    // 更新选择框状态
+    watch(()=> pointerHistory.value,()=>{
+     const result = dailyWorkTime.value.find((item)=> item.uuid === tomatoConfigAccessor.config.uuid)
+      if(result){
+        selectedDailyWorkTime.value = result.uuid;
+      }else{
+        selectedDailyWorkTime.value = "";
+      }
+    })
   },
   selectDailyWorkTime:(val:cryptoUUID | "")=> {
     
