@@ -129,10 +129,16 @@ function selectInitTime(): void {
 
     historyTimeInfo.value = catchHistory;
 
-    const currentTime = dayjs().valueOf();
+    const currentTime = dayjs();
+    // 当前时间大于缓存的截止时间（仅比较时间部分，忽略日期）
+    const targetTime = dayjs(topHis.timeInfo[1]);
+    // 调整目标时间到当前日期，以便仅比较小时及以下时间部分
+    const adjustedTargetTime = targetTime
+      .year(currentTime.year())
+      .month(currentTime.month())
+      .date(currentTime.date());
     // 当前时间大于缓存的截止时间。那么使用默认时间
-    //! 这里的逻辑重新改动,不比较天,比较小时
-    if (currentTime >= dayjs(topHis.timeInfo[1]).valueOf()) {
+    if (currentTime.valueOf() >= adjustedTargetTime.valueOf()) {
       const timeInfo = initTimeInfo();
 
       pushHistoryTimeInfo(timeInfo); //缓存起来
@@ -387,23 +393,29 @@ const switchHistory = (type: HistoryPointerAction) => {
 
 //HACK  代码需要重构 hisLen冗余
 function countHtyPointer(hisLen: number, type: HistoryPointerAction,val?:number): void {
-  if (type === "increase") {
-    pointerHistory.value++;
-    if (hisLen <= pointerHistory.value) {
-      pointerHistory.value = hisLen - 1;
+    switch (type) {
+      case HistoryPointerAction.increase:
+        pointerHistory.value++;
+        if (hisLen <= pointerHistory.value) {
+          pointerHistory.value = hisLen - 1;
+        }
+        break;
+      case HistoryPointerAction.decrease:
+        pointerHistory.value--;
+        if (pointerHistory.value < 0) {
+          pointerHistory.value = 0;
+        }
+        break;
+      case HistoryPointerAction.rest:
+        pointerHistory.value = 0;
+        break;
+      case HistoryPointerAction.newest:
+        pointerHistory.value = hisLen - 1;
+        break;
+      case HistoryPointerAction.goto:
+        pointerHistory.value = val!;
+        break;
     }
-  } else if (type === "decrease") {
-    pointerHistory.value--;
-    if (pointerHistory.value < 0) {
-      pointerHistory.value = 0;
-    }
-  } else if (type === "rest") {
-    pointerHistory.value = 0;
-  } else if (type === "newest") {
-    pointerHistory.value = hisLen - 1;
-  }else if(type === HistoryPointerAction.goto){
-    pointerHistory.value = val!;
-  }
 }
 //切换历史记录禁用
 const isSwitchHistoryDisabledLeft = computed(() => {
@@ -450,7 +462,7 @@ const  workTimeManager = {
       const res = await ElMessageBox.prompt("请输入时间段名称", "提示", {
         confirmButtonText: "确认",
         cancelButtonText: "取消",
-        inputValue: formatTimeRange(tomatoConfigAccessor.config.timeInfo),
+        inputValue: formatTimeRange(tomatoConfigAccessor.config.timeInfo) +" ()",
         inputValidator: (val: string) => {
           if (!val) {
             return "请输入时间段名称";
