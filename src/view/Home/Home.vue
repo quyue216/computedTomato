@@ -414,7 +414,7 @@ const disabledSwitchHistory = computed(() => {
 <template>
   <div class="common-layout">
     <el-container>
-      <el-header height="50px">
+      <el-header height="80px">
         <p>
           历史记录共<span class="highlight-value">{{historyTimeInfo.length}}</span>条，历史记录指针<span class="highlight-value">{{pointerHistory+1}}</span>
         </p>
