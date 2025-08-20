@@ -31,7 +31,7 @@ const props = defineProps<{
   disabledSwitchHistory: boolean;
 }>();
 
-defineEmits(["merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
+defineEmits(["add-work-time","merge-tomato", "cancel-merge-tomato", "clear-history-time-info","switch-history"]);
 
 const timeInterVal = defineModel<[Date, Date]>();
 
@@ -156,7 +156,7 @@ const timeInfoToNow = ()=>{
           >merge</el-button
         >
         <el-button type="success" @click="copyTime">copy</el-button>
-        <el-button type="info" icon="DocumentAdd"></el-button>
+        <el-button type="info"  @click="$emit('add-work-time')" icon="DocumentAdd"></el-button>
         <el-button type="warning" @click="timeInfoToNow">now</el-button>
         <el-button type="default" @click="$emit('cancel-merge-tomato')"
           :disabled="configData.mergeInfo.length === 0"
