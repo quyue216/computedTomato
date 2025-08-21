@@ -140,7 +140,6 @@ function selectInitTime(): void {
     // 当前时间大于缓存的截止时间。那么使用默认时间
     if (currentTime.valueOf() >= adjustedTargetTime.valueOf()) {
       const timeInfo = initTimeInfo();
-
       pushHistoryTimeInfo(timeInfo); //缓存起来
     } else {
       countHtyPointer(catchHistory.length, HistoryPointerAction.newest);
@@ -151,6 +150,8 @@ function selectInitTime(): void {
 
 // 计算时间区间
 function computedSegments(config: BaseTomatoConfig): void {
+  console.log("计算时间区间");
+  
   const { configData, timeInfo } = config;
   // 如果配置数据不合法，直接返回
 
