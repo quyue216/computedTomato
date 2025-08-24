@@ -21,6 +21,11 @@ import { initTimeInfo ,formatTimeRange} from "@/utils/tools";
 import { cloneDeep } from "lodash";
 import * as storeUtils from "@/utils/storeUtils";
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
+import workJson from './work.json'
+
+console.log(workJson,"workJson");
+
+
 const HISTORY_TIME_INFO = "HISTORY_TIME_INFO"; //历史记录的key
 
 const baseTomatoConfig: BaseTomatoConfig = {
@@ -645,12 +650,12 @@ workTimeManager.init(); //初始化
     height: 100% - 50px;
 
     .tm-header-bg {
-      width: 65%;
+      width: 70%;
       margin: 0 auto;
     }
 
     .tm-main-head-bg {
-      width: 65%;
+      width: 70%;
       margin: 0 auto;
     }
   }

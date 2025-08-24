@@ -1,0 +1,85 @@
+[
+    {
+        "configData": {
+            "tomatoTimeSize": 35,
+            "restTimeSize": 5,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-20T01:15:00.000Z",
+            "2025-08-20T03:15:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "ba0ec606-1a7c-4e7c-8ded-9aab82374311",
+        "remark": "09:15 - 11:15 (上午😘)"
+    },
+    {
+        "configData": {
+            "tomatoTimeSize": 25,
+            "restTimeSize": 8,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": [
+                3,
+                5
+            ]
+        },
+        "timeInfo": [
+            "2025-08-21T03:40:00.000Z",
+            "2025-08-21T05:00:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "370bd01f-8d62-4666-9e9a-d657c291702e",
+        "remark": "11:40 - 13:00 (中午😉)"
+    },
+    {
+        "configData": {
+            "tomatoTimeSize": 30,
+            "restTimeSize": 5,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-21T05:15:00.000Z",
+            "2025-08-21T09:00:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "99424317-4037-4ea3-8d8a-9d0a3ed725ca",
+        "remark": "13:15 - 17:00 (下午😢)"
+    },
+    {
+        "configData": {
+            "tomatoTimeSize": 30,
+            "restTimeSize": 5,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-21T09:40:00.000Z",
+            "2025-08-21T11:00:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "84d79aef-3c48-422d-bcca-0435a23fc0c3",
+        "remark": "17:40 - 19:00 (傍晚😶‍🌫️)"
+    },
+    {
+        "configData": {
+            "tomatoTimeSize": 30,
+            "restTimeSize": 5,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-21T11:00:00.000Z",
+            "2025-08-21T14:00:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "91b6423d-df72-4db0-882a-672a0f3adaad",
+        "remark": "19:00 - 22:00 (晚上🫠)"
+    }
+]
