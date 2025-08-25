@@ -22,8 +22,10 @@ import { cloneDeep } from "lodash";
 import * as storeUtils from "@/utils/storeUtils";
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
 import workJson from './work.json'
+import weekendJson from "./weekend.json"
 
-console.log(workJson,"workJson");
+console.log(workJson,"工作日常用时间段");
+console.log(weekendJson,"周末用时间段");
 
 
 const HISTORY_TIME_INFO = "HISTORY_TIME_INFO"; //历史记录的key
