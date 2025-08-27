@@ -1,58 +1,92 @@
 import axios from 'axios'
-import type { HttpStatusCode, AxiosInstance, AxiosInterceptorManager, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { getToken } from '../auth'
+import getErrorMessage from './errorCode'
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { ElMessage } from 'element-plus';
 
+const {HttpStatusCode} = axios;
 
-class Request {
+const axiosInstance = axios.create({
+    baseURL:import.meta.env.VITE_APP_BASE_API,
+    timeout: 10000,
+    withCredentials: true,
+})
 
-    baseURL: string
+// 请求拦截器
+axiosInstance.interceptors.request.use(
 
-    timeout: number = 10000
+    (config: InternalAxiosRequestConfig) => {
+        //1. 请求自动携带token
+        const token = getToken()
 
-    withCredentials: boolean = true
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`
+        }
 
-    interceptorFunc: {
-        request: AxiosInterceptorManager<InternalAxiosRequestConfig>[];
-        response: AxiosInterceptorManager<AxiosResponse>[]
-    } = {
-            request: [],
-            response: []
-    }
+        // 2. get delete 请求参数拼接到url后面
+        if(['get','delete'].includes(config.method as string) && Object.keys(config.params).length){
 
-    constructor(baseURL: string, ...args: any[]) {
+          const searchParams = new URLSearchParams(config.params);
 
+          config.url = `${config.url}?${searchParams.toString()}`
 
-        this.baseURL =baseURL ?? import.meta.env.VITE_API_URL as string
+          config.params = {}
+        }
 
-
-        Request.prototype = Object.create(axios.create({
-
-            baseURL: baseURL,
-            timeout: 10000,
-            withCredentials: true,
-            ...args
-        }) as AxiosInstance)
-
-        Request.prototype.constructor = Request;
-        /* 
-        1. Request实例想要具备axios的所有能力
-            2. axios.create() 实例作为属性挂载道Request实例上
-            3. extend方法
-            4. Object.create() 继承
-        */
-    }
-
-    // override
-    requestInterceptor(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-        this.interceptorFunc.request.push(config)
+        // 在发送请求之前做些什么
         return config
+    },
+    (error: AxiosError) => {
+        // 对请求错误做些什么
+        return Promise.reject(error)
     }
+)
 
-    responseInterceptor(config: AxiosResponse): AxiosResponse {
-        this.interceptorFunc.response.push(config)
-        this.interceptors.use.push(config)
+// 响应拦截器
+axiosInstance.interceptors.response.use(
+    // 2xx 范围内的状态码都会触发该函数。
+    (response: AxiosResponse) => {
+
+        const code:number = response.data.code ?? HttpStatusCode.Ok;
+        
+        const message:string = getErrorMessage(code);
+        
+        // 对响应数据做点什么
+        if (code === HttpStatusCode.Unauthorized) {
+            // 处理 401 错误
+            // 确认弹框处理是否更友好
+            /* 
+                1. 清除本地存储的用户信息
+                2. 跳转到登录页面，保存当前页面浏览路径
+                3. 提示用户重新登录
+                4. 
+            */
+        }else if(code === HttpStatusCode.InternalServerError){
+            // 处理 500 错误
+        }else
+
+        return response.data;
+    },
+    (error: AxiosError) => {
+        // 超出 2xx 范围的状态码都会触发该函数。
+        // 对响应错误做点什么
+        let  {message} = error;
+        
+        if (message === 'Network Error') {
+            message = '后端接口连接异常'
+        }else if(message.includes('timeout')){
+            message = '系统接口请求超时'
+        }else if(message.includes('Request failed with status code')){
+            message = '系统接口' + message.slice(message.length - 3) + '异常'
+        }
+
+        ElMessage({message,duration: 5 * 1000,type:'error'})
+
+        return Promise.reject(error);
     }
-}
+)
 
-const request = new Request();
+// copy axios
 
 
+export default axiosInstance;

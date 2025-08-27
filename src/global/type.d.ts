@@ -28,7 +28,11 @@
 
 
 // }
-
+interface ResponseData<T = any> {
+    code: number;
+    message: string;
+    data: T
+}
 
 declare module "store"{
     // export getItem: (key: string) => any;
