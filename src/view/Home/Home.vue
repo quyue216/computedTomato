@@ -21,6 +21,13 @@ import { initTimeInfo ,formatTimeRange} from "@/utils/tools";
 import { cloneDeep } from "lodash";
 import * as storeUtils from "@/utils/storeUtils";
 import TmHeader from "@/components/TmHeader/TmHeader.vue";
+import workJson from './work.json'
+import weekendJson from "./weekend.json"
+
+console.log(workJson,"工作日常用时间段");
+console.log(weekendJson,"周末用时间段");
+
+
 const HISTORY_TIME_INFO = "HISTORY_TIME_INFO"; //历史记录的key
 
 const baseTomatoConfig: BaseTomatoConfig = {
@@ -129,12 +136,17 @@ function selectInitTime(): void {
 
     historyTimeInfo.value = catchHistory;
 
-    const currentTime = dayjs().valueOf();
+    const currentTime = dayjs();
+    // 当前时间大于缓存的截止时间（仅比较时间部分，忽略日期）
+    const targetTime = dayjs(topHis.timeInfo[1]);
+    // 调整目标时间到当前日期，以便仅比较小时及以下时间部分
+    const adjustedTargetTime = targetTime
+      .year(currentTime.year())
+      .month(currentTime.month())
+      .date(currentTime.date());
     // 当前时间大于缓存的截止时间。那么使用默认时间
-    //! 这里的逻辑重新改动,不比较天,比较小时
-    if (currentTime >= dayjs(topHis.timeInfo[1]).valueOf()) {
+    if (currentTime.valueOf() >= adjustedTargetTime.valueOf()) {
       const timeInfo = initTimeInfo();
-
       pushHistoryTimeInfo(timeInfo); //缓存起来
     } else {
       countHtyPointer(catchHistory.length, HistoryPointerAction.newest);
@@ -145,6 +157,8 @@ function selectInitTime(): void {
 
 // 计算时间区间
 function computedSegments(config: BaseTomatoConfig): void {
+  console.log("计算时间区间");
+  
   const { configData, timeInfo } = config;
   // 如果配置数据不合法，直接返回
 
@@ -361,9 +375,8 @@ function pushHistoryTimeInfo(times: [Date, Date]): void {
 
 // 清空历史记录
 const clearHistoryTimeInfo = () => {
-  const lastHisItem = historyTimeInfo.value.pop();
   //保留最新一条记录
-  historyTimeInfo.value = lastHisItem ? [lastHisItem] : []; // 清空历史记录
+  historyTimeInfo.value = [tomatoConfigAccessor.config]; // 清空历史记录
 
   storeUtils.setLocalStorage(HISTORY_TIME_INFO, historyTimeInfo.value);
 
@@ -388,23 +401,29 @@ const switchHistory = (type: HistoryPointerAction) => {
 
 //HACK  代码需要重构 hisLen冗余
 function countHtyPointer(hisLen: number, type: HistoryPointerAction,val?:number): void {
-  if (type === "increase") {
-    pointerHistory.value++;
-    if (hisLen <= pointerHistory.value) {
-      pointerHistory.value = hisLen - 1;
+    switch (type) {
+      case HistoryPointerAction.increase:
+        pointerHistory.value++;
+        if (hisLen <= pointerHistory.value) {
+          pointerHistory.value = hisLen - 1;
+        }
+        break;
+      case HistoryPointerAction.decrease:
+        pointerHistory.value--;
+        if (pointerHistory.value < 0) {
+          pointerHistory.value = 0;
+        }
+        break;
+      case HistoryPointerAction.rest:
+        pointerHistory.value = 0;
+        break;
+      case HistoryPointerAction.newest:
+        pointerHistory.value = hisLen - 1;
+        break;
+      case HistoryPointerAction.goto:
+        pointerHistory.value = val!;
+        break;
     }
-  } else if (type === "decrease") {
-    pointerHistory.value--;
-    if (pointerHistory.value < 0) {
-      pointerHistory.value = 0;
-    }
-  } else if (type === "rest") {
-    pointerHistory.value = 0;
-  } else if (type === "newest") {
-    pointerHistory.value = hisLen - 1;
-  }else if(type === HistoryPointerAction.goto){
-    pointerHistory.value = val!;
-  }
 }
 //切换历史记录禁用
 const isSwitchHistoryDisabledLeft = computed(() => {
@@ -426,6 +445,7 @@ const DAILY_WORK_TIME = "dailyWorkTime";
 
 const dailyWorkTime = ref<Array<BaseTomatoConfig & {remark?:string}>>([]);
 
+console.log(dailyWorkTime,"常用时间段对象，当你需要操作常用时间段元素请操作它");
 
 const dailyWorkRecords = computed(() => {
   return dailyWorkTime.value.map((item) => ({
@@ -450,7 +470,7 @@ const  workTimeManager = {
       const res = await ElMessageBox.prompt("请输入时间段名称", "提示", {
         confirmButtonText: "确认",
         cancelButtonText: "取消",
-        inputValue: formatTimeRange(tomatoConfigAccessor.config.timeInfo),
+        inputValue: formatTimeRange(tomatoConfigAccessor.config.timeInfo) +" ()",
         inputValidator: (val: string) => {
           if (!val) {
             return "请输入时间段名称";
@@ -471,20 +491,30 @@ const  workTimeManager = {
       console.log(error);
     }
   },
-  _syncDWtToHistory(item:BaseTomatoConfig & {remark?:string}):void { //同步到历史记录中
+  _syncDWtToHistory(val:BaseTomatoConfig & {remark?:string}):void { //同步到历史记录中
     /* 
     1. 多选框数据来源于缓存或者历史记录
     */
-   const index =  historyTimeInfo.value.findIndex((item) => item.uuid === item.uuid);
+   const index =  historyTimeInfo.value.findIndex((item) => item.uuid === val.uuid);
     
    if(index !== -1){ // 存在无需做任何处理
     
     countHtyPointer(historyTimeInfo.value.length,HistoryPointerAction.goto,index);
     return;
    }
-   
+  // 有可能history中已经存在工作时间段 (这种情况无需在考虑)
+   const tempObj = val;
+
     //不存在 数据来源于缓存
-    pushHistoryTimeInfo(item.timeInfo);
+     const newHis = storeUtils.updateLocalStorageItem(
+      HISTORY_TIME_INFO,
+      historyTimeInfo.value.length.toString(),
+      tempObj
+    );
+
+    historyTimeInfo.value = newHis as Array<BaseTomatoConfig>;
+  
+    countHtyPointer(historyTimeInfo.value.length, HistoryPointerAction.newest);
   },
   init() {
     // 初始化常用工作时间
@@ -496,6 +526,15 @@ const  workTimeManager = {
         storeUtils.setLocalStorage(DAILY_WORK_TIME, dailyWorkTime.value);
       }
     );
+    // 更新选择框状态
+    watch(()=> pointerHistory.value,()=>{
+     const result = dailyWorkTime.value.find((item)=> item.uuid === tomatoConfigAccessor.config.uuid)
+      if(result){
+        selectedDailyWorkTime.value = result.uuid;
+      }else{
+        selectedDailyWorkTime.value = "";
+      }
+    })
   },
   selectDailyWorkTime:(val:cryptoUUID | "")=> {
     
@@ -613,12 +652,12 @@ workTimeManager.init(); //初始化
     height: 100% - 50px;
 
     .tm-header-bg {
-      width: 65%;
+      width: 70%;
       margin: 0 auto;
     }
 
     .tm-main-head-bg {
-      width: 65%;
+      width: 70%;
       margin: 0 auto;
     }
   }

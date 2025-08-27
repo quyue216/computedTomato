@@ -1,0 +1,66 @@
+[
+    {
+        "configData": {
+            "tomatoTimeSize": 30,
+            "restTimeSize": 5,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-24T01:30:00.000Z",
+            "2025-08-24T04:00:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "929c26be-8c17-4d4d-bd90-97fc4b6b1a73",
+        "remark": "09:30 - 12:00 (周末上午😘)"
+    },
+    {
+        "configData": {
+            "tomatoTimeSize": 25,
+            "restTimeSize": 8,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-24T05:35:00.000Z",
+            "2025-08-24T06:40:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "7db22367-edf5-4339-b1d1-05273d574d8d",
+        "remark": "13:35 - 14:40 (周末中午 😎)"
+    },
+    {
+        "configData": {
+            "tomatoTimeSize": 30,
+            "restTimeSize": 5,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-24T06:50:00.000Z",
+            "2025-08-24T09:20:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "1f0cc347-a898-4a5a-8ebe-9a8e90ad3a48",
+        "remark": "14:50 - 17:20 (周末下午🫥)"
+    },
+    {
+        "configData": {
+            "tomatoTimeSize": 30,
+            "restTimeSize": 5,
+            "bigRestTimeSize": 15,
+            "happenBigSegment": 3,
+            "mergeInfo": []
+        },
+        "timeInfo": [
+            "2025-08-24T12:00:00.000Z",
+            "2025-08-24T14:00:00.000Z"
+        ],
+        "onlyShowTm": false,
+        "uuid": "77e8e2f9-0fdb-4012-ad5e-0fd3b2d6902c",
+        "remark": "20:00 - 22:00 (周末傍晚😉)"
+    }
+]
