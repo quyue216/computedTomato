@@ -1,92 +1,53 @@
-import axios from 'axios'
-import { getToken } from '../auth'
-import getErrorMessage from './errorCode'
-import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import { ElMessage } from 'element-plus';
+import myAxios from './myAxios'
+import type { AxiosResponse ,AxiosRequestConfig} from 'axios';
 
-const {HttpStatusCode} = axios;
+import type { ApiSchema } from '@/api/user/userSchema';
 
-const axiosInstance = axios.create({
-    baseURL:import.meta.env.VITE_APP_BASE_API,
-    timeout: 10000,
-    withCredentials: true,
-})
+/* ---------- 工具类型 ---------- */
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
-// 请求拦截器
-axiosInstance.interceptors.request.use(
+type PathParams<P extends string> =
+  P extends `${infer L}/:${infer R}/${infer Rest}`
+    ? { [K in R]: string } & PathParams<`/${Rest}`>
+  : P extends `${string}/:${infer R}`
+    ? { [K in R]: string }
+    : {};
 
-    (config: InternalAxiosRequestConfig) => {
-        //1. 请求自动携带token
-        const token = getToken()
+// 从ApiSchema自动推断请求/响应类型
+type ApiDefinition<M extends Method, P extends string> = 
+  `${M} ${P}` extends keyof ApiSchema
+    ? ApiSchema[`${M} ${P}`]
+    : never;
 
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
+/* ---------- 请求函数 ---------- */
+export default async function api<M extends Method, P extends string>(
+  method: M,
+  path: P,
+  params?: PathParams<P>,
+  data?: ApiDefinition<M, P> extends { body: infer B } ? B : never,
+  config?: Omit<AxiosRequestConfig, 'url' | 'method' | 'data' | 'params'>
+): Promise<AxiosResponse<
+    ApiDefinition<M, P> extends { resp: infer R } ? R : ResponseData<{}>,
+    ApiDefinition<M, P> extends { body: infer R } ? R : {}
+  >['data']>
+{
+  // 路径参数替换
+  let url = path as string;
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      url = url.replace(`:${k}`, encodeURIComponent(String(v)));
+    });
+  }
+  // 自动推断响应类型
+  const res = await myAxios({
+    method,
+    url,
+    [method === 'GET' ? 'params' : 'data']: data,
+    ...config
+  }) as AxiosResponse<
+    ApiDefinition<M, P> extends { resp: infer R } ? R : ResponseData<{}>,
+    ApiDefinition<M, P> extends { body: infer R } ? R : {}
+  >['data']
 
-        // 2. get delete 请求参数拼接到url后面
-        if(['get','delete'].includes(config.method as string) && Object.keys(config.params).length){
-
-          const searchParams = new URLSearchParams(config.params);
-
-          config.url = `${config.url}?${searchParams.toString()}`
-
-          config.params = {}
-        }
-
-        // 在发送请求之前做些什么
-        return config
-    },
-    (error: AxiosError) => {
-        // 对请求错误做些什么
-        return Promise.reject(error)
-    }
-)
-
-// 响应拦截器
-axiosInstance.interceptors.response.use(
-    // 2xx 范围内的状态码都会触发该函数。
-    (response: AxiosResponse) => {
-
-        const code:number = response.data.code ?? HttpStatusCode.Ok;
-        
-        const message:string = getErrorMessage(code);
-        
-        // 对响应数据做点什么
-        if (code === HttpStatusCode.Unauthorized) {
-            // 处理 401 错误
-            // 确认弹框处理是否更友好
-            /* 
-                1. 清除本地存储的用户信息
-                2. 跳转到登录页面，保存当前页面浏览路径
-                3. 提示用户重新登录
-                4. 
-            */
-        }else if(code === HttpStatusCode.InternalServerError){
-            // 处理 500 错误
-        }else
-
-        return response.data;
-    },
-    (error: AxiosError) => {
-        // 超出 2xx 范围的状态码都会触发该函数。
-        // 对响应错误做点什么
-        let  {message} = error;
-        
-        if (message === 'Network Error') {
-            message = '后端接口连接异常'
-        }else if(message.includes('timeout')){
-            message = '系统接口请求超时'
-        }else if(message.includes('Request failed with status code')){
-            message = '系统接口' + message.slice(message.length - 3) + '异常'
-        }
-
-        ElMessage({message,duration: 5 * 1000,type:'error'})
-
-        return Promise.reject(error);
-    }
-)
-
-// copy axios
-
-
-export default axiosInstance;
+  return res;
+}

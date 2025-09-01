@@ -28,10 +28,11 @@
 
 
 // }
-interface ResponseData<T = any> {
-    code: number;
-    message: string;
-    data: T
+type ResponseData<T extends object> ={
+     msg: string;
+     error: boolean;
+     token?: string;
+     data: T;
 }
 
 declare module "store"{
