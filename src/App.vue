@@ -22,7 +22,7 @@ const test = () => {
   });
 
   api("GET", "/user").then((res) => {
-    console.log(res.data);
+    console.log(res);
   });
 };
 </script>

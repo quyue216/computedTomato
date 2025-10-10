@@ -10,3 +10,14 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 app.mount('#app');
+
+let arr = ['1','2','3']
+
+type T1 = typeof arr[number]
+
+type MyReadonly<T> = {
+ readonly [P in keyof T]: T[P];
+};
+
+type T2 = keyof typeof arr
+
