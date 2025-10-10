@@ -12,3 +12,8 @@ export function getToken(): string | null {
 export function setToken(token: string) {
     storeUtils.setLocalStorage(TOKEN_KEY, token)
 }
+
+/* 移除token */
+export function removeToken() {
+    storeUtils.removeLocalStorage(TOKEN_KEY);
+}
