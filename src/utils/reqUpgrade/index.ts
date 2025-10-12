@@ -1,8 +1,8 @@
-import { getToken, setToken, removeToken } from '../auth';
+import { getToken, removeToken } from '../auth';
 import Axios from 'axios'
 import type { AxiosResponse, InternalAxiosRequestConfig, AxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
+import againRequest  from './requestAgainSend'
 
 
 // 返回结果处理
@@ -69,6 +69,12 @@ axios.interceptors.response.use((res: AxiosResponse<Result>) => {
 
     return responseHandle[res.data.code ?? 'default'](res);
 }, (error: AxiosError) => {
+
+    // 请求被手动取消时无需重新发送
+    if(!Axios.isCancel(error)){
+        // 请求重发
+        return againRequest(error,axios); 
+    }
 
     return Promise.reject(error)
 })
