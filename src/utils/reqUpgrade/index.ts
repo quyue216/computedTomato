@@ -4,7 +4,7 @@ import type { AxiosResponse, InternalAxiosRequestConfig, AxiosError } from 'axio
 import { ElMessage, ElMessageBox } from 'element-plus'
 import againRequest  from './requestAgainSend'
 import { addPendingRequest, removePendingRequest } from './cancelRepeatRequest';
-
+import { responseInterceptor as cacheResInterceptor , requestInterceptor as cacheReqInterceptor} from './requestCache';
 
 // 返回结果处理
 // 自定义约定接口返回{code: xxx, data: xxx, msg:'err message'}
@@ -72,6 +72,9 @@ axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 axios.interceptors.response.use((res: AxiosResponse<Result>) => {
     // 响应正常时候就从pendingRequest对象中移除请求
     removePendingRequest(res.config);
+
+    cacheResInterceptor(res);
+
     return responseHandle[res.data.code ?? 'default'](res);
 }, (error: AxiosError) => {
 
@@ -82,6 +85,11 @@ axios.interceptors.response.use((res: AxiosResponse<Result>) => {
     if(!Axios.isCancel(error)){
         // 请求重发
         return againRequest(error,axios); 
+    }
+
+    if(Axios.isCancel(error)){
+        // return Promise.resolve(error.)
+        //TODO 测试过程中补上
     }
 
     return Promise.reject(error)
