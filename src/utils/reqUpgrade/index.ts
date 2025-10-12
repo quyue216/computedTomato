@@ -3,6 +3,7 @@ import Axios from 'axios'
 import type { AxiosResponse, InternalAxiosRequestConfig, AxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import againRequest  from './requestAgainSend'
+import { addPendingRequest, removePendingRequest } from './cancelRepeatRequest';
 
 
 // 返回结果处理
@@ -58,6 +59,9 @@ axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     } else {
         ElMessage.error('不允许的请求方式' + config.method)
     }
+    // pendding 中的请求，后续请求不发送（由于存放的peddingMap 的key 和参数有关，所以放在参数处理之后）
+    addPendingRequest(config);
+
 
     return config;
 }, (err) => {
@@ -66,9 +70,13 @@ axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 // 响应拦截器
 axios.interceptors.response.use((res: AxiosResponse<Result>) => {
-
+    // 响应正常时候就从pendingRequest对象中移除请求
+    removePendingRequest(res.config);
     return responseHandle[res.data.code ?? 'default'](res);
 }, (error: AxiosError) => {
+
+    // 响应正常时候就从pendingRequest对象中移除请求
+    error.config && removePendingRequest(error!.config);
 
     // 请求被手动取消时无需重新发送
     if(!Axios.isCancel(error)){

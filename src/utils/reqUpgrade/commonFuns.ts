@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from 'axios'
 
-export function generaReqKey(config: AxiosRequestConfig) {
+export function generateReqKey(config: AxiosRequestConfig) {
 
     if (config && config.data && isJsonStr(config.data)) { //[ ]  config.data此时为json字符串
         config.data = JSON.parse(config.data)
