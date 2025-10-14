@@ -1,4 +1,5 @@
 import type { InternalAxiosRequestConfig, AxiosResponse } from 'axios'
+import type {InternalAxiosRequestConfigWithMyAxios} from './index'
 // 取消重复请求
 /* 假如用户重复点击按钮，先后提交了 A 和 B 这两个完全相同（考虑请求路径、方法、参数）的请求，我们可以从以下几种拦截方案中选择其一：
 1. 取消 A 请求，只发出 B 请求（会导致A请求已经发出去,被后端处理了）
@@ -13,13 +14,9 @@ import { generateReqKey } from './commonFuns'
 // addPendingRequest ：用于把当前请求信息添加到pendingRequest对象 中；
 const pendingRequest = new Map(); // Map对象保存键值对。任何值(对象或者原始值) 都可以作为一个键或一个值。
 
-interface InternalAxiosRequestConfigWithCRepeat extends InternalAxiosRequestConfig {
-  cancelRequest?: boolean,
-}
-
 
 // TODO  类型代码能不能统一添加
-export function addPendingRequest(config: InternalAxiosRequestConfigWithCRepeat) {
+export function addPendingRequest(config: InternalAxiosRequestConfigWithMyAxios) {
   // 请求都有其对应的唯一可以，联想到JWT
   const requestKey = generateReqKey(config);
 
@@ -44,7 +41,7 @@ export function addPendingRequest(config: InternalAxiosRequestConfigWithCRepeat)
 
 
 // removePendingRequest：检查是否存在重复请求，若存在则取消已发的请求。
-export function removePendingRequest(config: InternalAxiosRequestConfigWithCRepeat) {
+export function removePendingRequest(config: InternalAxiosRequestConfigWithMyAxios) {
 
   // 判断是否有key
   if (config && config.cancelRequest) {

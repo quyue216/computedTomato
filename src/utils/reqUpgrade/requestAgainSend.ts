@@ -1,12 +1,6 @@
 import { isJsonStr } from './commonFuns'
 import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
-
-// 扩展AxiosRequestConfig接口，添加自定义重试相关属性
-export interface AxiosRequestConfigWithRetry extends AxiosRequestConfig {
-  retry?: number;
-  retryDelay?: number;
-  __retryCount?: number;
-}
+import type { InternalAxiosRequestConfigWithMyAxios } from './index'
 
 /* 
  * 
@@ -16,8 +10,11 @@ export interface AxiosRequestConfigWithRetry extends AxiosRequestConfig {
 */
 
 export default function againRequest(err: AxiosError, axios: AxiosInstance) {
-    const config = err.config as AxiosRequestConfigWithRetry;
-
+    const config = err.config as InternalAxiosRequestConfigWithMyAxios & {
+      __retryCount?: number;
+    };
+    
+    console.log("config",config)
     // 如果没有配置或配置中没有设置retry，则不重试
     if (!config || !config.retry) return Promise.reject(err);
 

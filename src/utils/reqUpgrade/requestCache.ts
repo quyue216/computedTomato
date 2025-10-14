@@ -1,5 +1,6 @@
 import Axios from 'axios'
 import type {AxiosResponse, InternalAxiosRequestConfig,AxiosInstance} from 'axios'
+import type {InternalAxiosRequestConfigWithMyAxios}  from './index'
 import { generateReqKey } from './commonFuns'
 
 interface Storage {
@@ -15,10 +16,10 @@ const options = {
     expire: 20000
 };
 
-interface InternalAxiosRequestConfigWithCache extends InternalAxiosRequestConfig{
+/* interface InternalAxiosRequestConfigWithCache extends InternalAxiosRequestConfig{
     cache:boolean,
     setExpireTime:number
-}
+} */
 
 //TODO  初始化
 (() => {
@@ -90,7 +91,7 @@ let CACHES = new Proxy(_CACHES, {
 
 
 // 请求拦截器
-export function requestInterceptor(config:InternalAxiosRequestConfigWithCache,axios:AxiosInstance){
+export function requestInterceptor(config:InternalAxiosRequestConfigWithMyAxios,axios:AxiosInstance){
 
     // 开启缓存则保存请求结果和cancel函数
     if(config.cache){
@@ -98,13 +99,13 @@ export function requestInterceptor(config:InternalAxiosRequestConfigWithCache,ax
      let  data = CACHES[`${generateReqKey(config)}`];
 
      let setExpireTime = config.setExpireTime ?? options.expire; 
-
+     //当前时间减去数据存储的时间 判断
      if(data && getNowTime() - data.expire < setExpireTime){
 
         config.cancelToken = new Axios.CancelToken(cancel=>{
             //TODO cancel函数的参数会作为promise的error被捕获
             cancel(data)
-
+            console.log("请求缓存",config)
         })
      }
 
@@ -114,7 +115,7 @@ export function requestInterceptor(config:InternalAxiosRequestConfigWithCache,ax
 
 export function responseInterceptor(res:AxiosResponse){
     //TODO 类型在此处设置合适嘛
-    const config = res.config  as InternalAxiosRequestConfigWithCache;
+    const config = res.config  as InternalAxiosRequestConfigWithMyAxios;
     
     if(config?.cache === true){
 

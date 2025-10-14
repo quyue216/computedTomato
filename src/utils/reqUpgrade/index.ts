@@ -1,10 +1,25 @@
 import { getToken, removeToken } from '../auth';
 import Axios from 'axios'
-import type { AxiosResponse, InternalAxiosRequestConfig, AxiosError } from 'axios'
+import type { AxiosResponse, AxiosRequestConfig, AxiosError ,InternalAxiosRequestConfig} from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import againRequest  from './requestAgainSend'
+import againRequest from './requestAgainSend'
 import { addPendingRequest, removePendingRequest } from './cancelRepeatRequest';
-import { responseInterceptor as cacheResInterceptor , requestInterceptor as cacheReqInterceptor} from './requestCache';
+import { responseInterceptor as cacheResInterceptor, requestInterceptor as cacheReqInterceptor } from './requestCache';
+
+
+export interface MyAxios{
+  retry?: number;
+    retryDelay?: number;
+    cache?: boolean,
+    setExpireTime?: number,
+    cancelRequest?: boolean,
+}
+
+
+interface AxiosRequestConfigWithMyAxios extends AxiosRequestConfig,MyAxios{}
+
+ export interface  InternalAxiosRequestConfigWithMyAxios extends InternalAxiosRequestConfig,MyAxios{};
+
 
 // 返回结果处理
 // 自定义约定接口返回{code: xxx, data: xxx, msg:'err message'}
@@ -38,12 +53,12 @@ interface Result<T = any> {
 // axios实例创建
 const axios = Axios.create({
     baseURL: import.meta.env.VITE_APP_BASE_API,
-    timeout: 10000,
+    timeout: 100000,
     withCredentials: true,
 });
 
 // 添加请求拦截器
-axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+axios.interceptors.request.use((config: InternalAxiosRequestConfigWithMyAxios) => {
     // 添加token认证
     const token = getToken();
 
@@ -62,7 +77,7 @@ axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     // pendding 中的请求，后续请求不发送（由于存放的peddingMap 的key 和参数有关，所以放在参数处理之后）
     addPendingRequest(config);
 
-
+    cacheReqInterceptor(config, axios);
     return config;
 }, (err) => {
     return Promise.reject(err);
@@ -82,15 +97,37 @@ axios.interceptors.response.use((res: AxiosResponse<Result>) => {
     error.config && removePendingRequest(error!.config);
 
     // 请求被手动取消时无需重新发送
-    if(!Axios.isCancel(error)){
+    if (!Axios.isCancel(error)) {
+        console.log("请求重发触发");
         // 请求重发
-        return againRequest(error,axios); 
+        return againRequest(error, axios);
     }
 
-    if(Axios.isCancel(error)){
-        // return Promise.resolve(error.)
-        //TODO 测试过程中补上
+    const message = error.message as  string | AxiosResponse<Result>;
+
+    if (Axios.isCancel(error)) {
+        // 类型保护
+        if(typeof message !== 'string'){
+            // @ts-ignore 
+            if(message.data && message.config.cache){
+
+                return Promise.resolve(message.data.data)
+                //TODO 测试过程中补上
+            }
+        }
+    
     }
 
     return Promise.reject(error)
 })
+
+
+/* 
+request请求函数
+*/
+function request(config: AxiosRequestConfigWithMyAxios) { //TODO  泛型自动推断
+    return axios(config);
+}
+
+export default request;
+
