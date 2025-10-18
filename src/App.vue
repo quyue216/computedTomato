@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import Home from "@/view/Home/Home.vue";
 import Study from "@/view/Home/study.vue";
-import api from "@/utils/request/index";
+// import  from "@/utils/request/index";
+import request from "@/utils/reqUpgrade/index";
 import { ref } from "vue";
 
 // -----------移动端环境判定----------------
@@ -12,16 +13,14 @@ function isMobile() {
 const isMobileEnv = ref(false);
 
 const test = () => {
-  api(
-    "POST",
-    "/login",
-    {},
-    { email: "10676114@qq.com", password: "123456" }
-  ).then((res) => {
-    console.log(res.data);
-  });
-
-  api("GET", "/user").then((res) => {
+  request({
+    url: "/api/v1/user/login/pwd",
+    data: {
+      email: "10676114@qq.com",
+      password: "current520",
+    },
+    method: "post",
+  }).then((res) => {
     console.log(res);
   });
 };

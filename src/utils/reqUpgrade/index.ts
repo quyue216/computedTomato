@@ -77,7 +77,7 @@ axios.interceptors.request.use((config: InternalAxiosRequestConfigWithMyAxios) =
     // pendding 中的请求，后续请求不发送（由于存放的peddingMap 的key 和参数有关，所以放在参数处理之后）
     addPendingRequest(config);
 
-    cacheReqInterceptor(config, axios);
+    cacheReqInterceptor(config);
     return config;
 }, (err) => {
     return Promise.reject(err);
